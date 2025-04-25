@@ -1,86 +1,57 @@
-//
-//  ContentView.swift
-//  GambleLedger
-//
-//  Created by rinka on 2025/04/25.
-//
-
+// ContentView.swift
 import SwiftUI
-import CoreData
 
 struct ContentView: View {
-    @Environment(\.managedObjectContext) private var viewContext
-
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Item.timestamp, ascending: true)],
-        animation: .default)
-    private var items: FetchedResults<Item>
-
+    @EnvironmentObject var appState: AppState
+    @State private var selection: Int = 0
+    
     var body: some View {
-        NavigationView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp!, formatter: itemFormatter)")
-                    } label: {
-                        Text(item.timestamp!, formatter: itemFormatter)
-                    }
+        TabView(selection: $selection) {
+            HomeView()
+                .tabItem {
+                    Image(systemName: "house.fill")
+                    Text("ホーム")
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
+                .tag(0)
+            
+            BetRecordView()
+                .tabItem {
+                    Image(systemName: "plus.circle.fill")
+                    Text("記録")
                 }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
+                .tag(1)
+            
+            StatisticsView()
+                .tabItem {
+                    Image(systemName: "chart.bar.fill")
+                    Text("統計")
                 }
-            }
-            Text("Select an item")
+                .tag(2)
+            
+            BudgetView()
+                .tabItem {
+                    Image(systemName: "wallet.pass.fill")
+                    Text("予算")
+                }
+                .tag(3)
+            
+            HistoryView()
+                .tabItem {
+                    Image(systemName: "clock.fill")
+                    Text("履歴")
+                }
+                .tag(4)
+        }
+        .accentColor(.primaryColor)
+        .onChange(of: appState.selectedTab) { newValue in
+            selection = newValue
+        }
+        .alert(isPresented: $appState.showAlert) {
+            Alert(
+                title: Text("通知"),
+                message: Text(appState.alertMessage ?? ""),
+                dismissButton: .default(Text("閉じる"))
+            )
         }
     }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
-
-            do {
-                try viewContext.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            offsets.map { items[$0] }.forEach(viewContext.delete)
-
-            do {
-                try viewContext.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
-        }
-    }
-}
-
-private let itemFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .short
-    formatter.timeStyle = .medium
-    return formatter
-}()
-
-#Preview {
-    ContentView().environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
 }
