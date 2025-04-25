@@ -1,4 +1,4 @@
-// StatisticsView.swift
+// GambleLedger/Views/Statistics/StatisticsView.swift
 import SwiftUI
 import Charts
 
@@ -28,12 +28,23 @@ struct StatisticsView: View {
                     // 利益グラフ
                     if !viewModel.profitChartData.isEmpty {
                         ProfitChartView(data: viewModel.profitChartData)
-                            .frame(height: 220)
+                            .padding(.horizontal)
+                    }
+                    
+                    // ROIグラフ
+                    if !viewModel.roiChartData.isEmpty {
+                        ROIChartView(data: viewModel.roiChartData)
                             .padding(.horizontal)
                     }
                     
                     // ギャンブル種別統計
-                    GambleTypeStatsSection(stats: viewModel.gambleTypeStats)
+                    if !viewModel.gambleTypeStats.isEmpty {
+                        GambleTypeStatsSection(stats: viewModel.gambleTypeStats)
+                            .padding(.horizontal)
+                    }
+                    
+                    // 統計数値カード
+                    StatsMetricsGrid()
                         .padding(.horizontal)
                 }
                 .padding(.vertical)
@@ -53,86 +64,21 @@ struct StatisticsView: View {
     }
 }
 
-struct TotalStatsCard: View {
-    let stats: StatsSummary
+// ギャンブル種別統計セクション
+struct GambleTypeStatsSection: View {
+    let stats: [GambleTypeStat]
     
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("総利益")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                    
-                    Text("\(stats.profit.formatted(.currency(code: "JPY")))")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(stats.profit >= 0 ? .accentSuccess : .accentDanger)
-                }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("全体回収率")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                    
-                    Text("\(stats.roi, specifier: "%.1f")%")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(stats.roi >= 0 ? .accentSuccess : .accentDanger)
-                }
-            }
+        VStack(alignment: .leading, spacing: 16) {
+            Text("ギャンブル種別別統計")
+                .font(.headline)
+                .foregroundColor(.secondaryColor)
             
-            Divider()
-            
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("投資額")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                    
-                    Text("\(stats.totalBet.formatted(.currency(code: "JPY")))")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                }
+            ForEach(stats) { stat in
+                GambleTypeStatRow(stat: stat)
                 
-                Spacer()
-                
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("払戻額")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                    
-                    Text("\(stats.totalReturn.formatted(.currency(code: "JPY")))")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                }
-            }
-            
-            Divider()
-            
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("的中率")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                    
-                    Text("\(stats.winRate, specifier: "%.1f")%")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("ベット回数")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                    
-                    Text("\(stats.betCount)回")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
+                if stat.id != stats.last?.id {
+                    Divider()
                 }
             }
         }
@@ -143,4 +89,117 @@ struct TotalStatsCard: View {
     }
 }
 
-// その他のコンポーネント実装は省略
+// ギャンブル種別統計行
+struct GambleTypeStatRow: View {
+    let stat: GambleTypeStat
+    
+              // GambleLedger/Views/Statistics/StatisticsView.swift （続き）
+                   var body: some View {
+                       VStack(spacing: 12) {
+                           HStack {
+                               // アイコンと種別名
+                               ZStack {
+                                   Circle()
+                                       .fill(stat.color)
+                                       .frame(width: 32, height: 32)
+                                   
+                                   Image(systemName: stat.icon)
+                                       .foregroundColor(.white)
+                               }
+                               
+                               Text(stat.name)
+                                   .font(.headline)
+                               
+                               Spacer()
+                               
+                               // 損益
+                               VStack(alignment: .trailing) {
+                                   Text(stat.profit.formatted(.currency(code: "JPY")))
+                                       .font(.title3)
+                                       .fontWeight(.bold)
+                                       .foregroundColor(stat.profit >= 0 ? .accentSuccess : .accentDanger)
+                                   
+                                   Text("ROI: \(stat.roi, specifier: "%.1f")%")
+                                       .font(.caption)
+                                       .foregroundColor(stat.roi >= 0 ? .accentSuccess : .accentDanger)
+                               }
+                           }
+                           
+                           // 詳細情報
+                           HStack(spacing: 16) {
+                               StatInfoItem(
+                                   label: "ベット数",
+                                   value: "\(stat.betCount)回"
+                               )
+                               
+                               StatInfoItem(
+                                   label: "的中率",
+                                   value: "\(stat.winRate, specifier: "%.1f")%"
+                               )
+                               
+                               StatInfoItem(
+                                   label: "総投資",
+                                   value: "\(stat.totalBet.formatted(.currency(code: "JPY")))"
+                               )
+                           }
+                       }
+                       .padding(.vertical, 4)
+                   }
+               }
+
+               // 統計情報アイテム
+               struct StatInfoItem: View {
+                   let label: String
+                   let value: String
+                   
+                   var body: some View {
+                       VStack(alignment: .leading, spacing: 2) {
+                           Text(label)
+                               .font(.caption)
+                               .foregroundColor(.gray)
+                           
+                           Text(value)
+                               .font(.subheadline)
+                       }
+                   }
+               }
+
+               // 統計メトリクスグリッド
+               struct StatsMetricsGrid: View {
+                   var body: some View {
+                       StatsGridView(
+                           stats: [
+                               StatCardData(
+                                   title: "平均ベット金額",
+                                   value: "¥3,240",
+                                   icon: "banknote",
+                                   color: .primaryColor
+                               ),
+                               StatCardData(
+                                   title: "最大勝ち金額",
+                                   value: "¥32,500",
+                                   icon: "arrow.up.forward",
+                                   color: .accentSuccess
+                               ),
+                               StatCardData(
+                                   title: "最大負け金額",
+                                   value: "¥12,800",
+                                   icon: "arrow.down.forward",
+                                   color: .accentDanger
+                               ),
+                               StatCardData(
+                                   title: "連勝記録",
+                                   value: "6回",
+                                   icon: "flame",
+                                   color: .gambleHorse
+                               )
+                           ],
+                           columns: 2
+                       )
+                   }
+               }
+
+               // プレビュー
+               #Preview {
+                   StatisticsView()
+               }

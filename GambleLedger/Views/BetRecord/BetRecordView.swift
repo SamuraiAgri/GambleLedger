@@ -1,4 +1,4 @@
-// BetRecordView.swift
+// GambleLedger/Views/BetRecord/BetRecordView.swift
 import SwiftUI
 
 struct BetRecordView: View {
@@ -21,7 +21,7 @@ struct BetRecordView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
                             ForEach(viewModel.gambleTypes) { type in
-                                GambleTypeButton(
+                                TypeButton(
                                     gambleType: type,
                                     isSelected: viewModel.selectedGambleTypeID == type.id,
                                     action: {
@@ -137,7 +137,8 @@ struct BetRecordView: View {
     }
 }
 
-struct GambleTypeButton: View {
+// ギャンブル種別ボタン (名前を変更)
+struct TypeButton: View {
     let gambleType: GambleTypeModel
     let isSelected: Bool
     let action: () -> Void
@@ -163,4 +164,8 @@ struct GambleTypeButton: View {
             }
         }
     }
+}
+
+#Preview {
+    BetRecordView().environmentObject(AppState())
 }
