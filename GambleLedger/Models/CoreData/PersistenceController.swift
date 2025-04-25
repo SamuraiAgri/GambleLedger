@@ -26,11 +26,11 @@ struct PersistenceController {
     // テストやプレビュー用の一時的なコンテナ
     static var preview: PersistenceController = {
         let controller = PersistenceController(inMemory: true)
-        let viewContext = controller.container.viewContext
+        //let viewContext = controller.container.viewContext
         
         // サンプルデータの作成
-        let sampleData = SampleData()
-        sampleData.createSampleData(in: viewContext)
+        //let sampleData = SampleData()
+        //sampleData.createSampleData(in: viewContext)
         
         return controller
     }()

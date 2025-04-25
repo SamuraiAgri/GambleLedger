@@ -1,4 +1,5 @@
-// GambleLedger/Views/Budget/BudgetView.swift
+// GambleLedger/Views/Budget/BudgetView.swift の修正
+// AddBudgetView 部分を BudgetView 内に統合
 import SwiftUI
 
 struct BudgetView: View {
@@ -51,7 +52,7 @@ struct BudgetView: View {
                 }
             }
             .sheet(isPresented: $showingAddBudgetSheet) {
-                AddBudgetView(viewModel: viewModel)
+                AddBudgetSheetView(viewModel: viewModel)
             }
             .overlay(
                 viewModel.isLoading ?
@@ -333,4 +334,116 @@ struct NoBudgetView: View {
         .frame(maxWidth: .infinity)
         .background(Color.backgroundSecondary)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x:
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+    }
+}
+
+// AddBudgetViewをその場で定義（元々は別ファイルだったもの）
+struct AddBudgetSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var viewModel: BudgetViewModel
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                // 予算金額
+                Section(header: Text("予算金額")) {
+                    HStack {
+                        Text("金額")
+                        TextField("0", text: $viewModel.budgetAmount)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                        Text("円")
+                    }
+                }
+                
+                // 期間
+                Section(header: Text("期間")) {
+                    DatePicker("開始日", selection: $viewModel.selectedStartDate, displayedComponents: .date)
+                    DatePicker("終了日", selection: $viewModel.selectedEndDate, displayedComponents: .date)
+                    
+                    // クイック期間選択
+                    HStack {
+                        Spacer()
+                        
+                        Button("今月") {
+                            let today = Date()
+                            viewModel.selectedStartDate = today.startOfMonth()
+                            viewModel.selectedEndDate = today.endOfMonth()
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Button("翌月") {
+                            let today = Date()
+                            let calendar = Calendar.current
+                            if let nextMonth = calendar.date(byAdding: .month, value: 1, to: today) {
+                                viewModel.selectedStartDate = nextMonth.startOfMonth()
+                                viewModel.selectedEndDate = nextMonth.endOfMonth()
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Spacer()
+                    }
+                }
+                
+                // 通知設定
+                Section(header: Text("通知設定")) {
+                    HStack {
+                        Text("予算\(viewModel.notifyThreshold)%使用で通知")
+                        Spacer()
+                        Stepper("", value: $viewModel.notifyThreshold, in: 50...90, step: 5)
+                            .labelsHidden()
+                    }
+                }
+                
+                // ギャンブル種別（任意）
+                Section(header: Text("ギャンブル種別（任意）")) {
+                    Picker("ギャンブル種別", selection: $viewModel.selectedGambleTypeID) {
+                        Text("全ギャンブル").tag(nil as UUID?)
+                        
+                        ForEach(viewModel.gambleTypes) { type in
+                            Text(type.name).tag(type.id as UUID?)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+                
+                // 保存ボタン
+                Section {
+                    Button(action: {
+                        viewModel.saveBudget()
+                        dismiss()
+                    }) {
+                        HStack {
+                            Spacer()
+                            if viewModel.isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                            } else {
+                                Text("予算を設定")
+                                    .fontWeight(.bold)
+                            }
+                            Spacer()
+                        }
+                    }
+                    .disabled(viewModel.isLoading)
+                    .listRowBackground(Color.primaryColor)
+                    .foregroundColor(.white)
+                }
+            }
+            .navigationTitle("予算設定")
+            .alert(isPresented: $viewModel.showError) {
+                Alert(
+                    title: Text("エラー"),
+                    message: Text(viewModel.errorMessage ?? "不明なエラーが発生しました"),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
+        }
+    }
+}
+
+#Preview {
+    BudgetView()
+}

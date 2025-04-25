@@ -57,7 +57,7 @@ struct BudgetModel: Identifiable {
         forDate date: Date = Date(),
         gambleTypeID: UUID? = nil
     ) -> BudgetModel {
-        let calendar = Calendar.current
+        // calendar変数を削除し、直接メソッドを呼び出す
         let startOfMonth = date.startOfMonth()
         let endOfMonth = date.endOfMonth()
         
@@ -129,68 +129,68 @@ struct BudgetDisplayModel: Identifiable {
         totalAmount.formatted(.currency(code: "JPY"))
     }
     
-        var formattedUsedAmount: String {
-            usedAmount.formatted(.currency(code: "JPY"))
-        }
-        
-        var formattedRemainingAmount: String {
-            remainingAmount.formatted(.currency(code: "JPY"))
-        }
-        
-        var formattedUsagePercentage: String {
-            String(format: "%.1f%%", usagePercentage)
-        }
+    var formattedUsedAmount: String {
+        usedAmount.formatted(.currency(code: "JPY"))
     }
+        
+    var formattedRemainingAmount: String {
+        remainingAmount.formatted(.currency(code: "JPY"))
+    }
+        
+    var formattedUsagePercentage: String {
+        String(format: "%.1f%%", usagePercentage)
+    }
+}
 
-    // 予算状態の列挙型
-    enum BudgetStatus {
-        case good       // 良好（0〜60%）
-        case warning    // 警告（60〜80%）
-        case danger     // 危険（80〜100%）
-        case depleted   // 枯渇（100%以上）
-    }
+// 予算状態の列挙型
+enum BudgetStatus {
+    case good       // 良好（0〜60%）
+    case warning    // 警告（60〜80%）
+    case danger     // 危険（80〜100%）
+    case depleted   // 枯渇（100%以上）
+}
 
-    // 予算関連のユーティリティ関数
-    struct BudgetUtility {
-        // 今月の予算を取得または作成
-        static func getCurrentMonthBudget(
-            coreDataManager: CoreDataManager,
-            completion: @escaping (BudgetModel) -> Void
-        ) {
-            coreDataManager.fetchCurrentBudget { budgetObject in
-                if let budgetObject = budgetObject {
-                    let budget = BudgetModel.fromManagedObject(budgetObject)
-                    completion(budget)
-                } else {
-                    // 予算が見つからない場合はデフォルト予算を作成
-                    let defaultBudget = BudgetModel.createMonthlyBudget(
-                        amount: Constants.Budget.defaultMonthlyAmount
-                    )
-                    
-                    // TODO: CoreDataに保存するコードを追加
-                    
-                    completion(defaultBudget)
-                }
+// 予算関連のユーティリティ関数
+struct BudgetUtility {
+    // 今月の予算を取得または作成
+    static func getCurrentMonthBudget(
+        coreDataManager: CoreDataManager,
+        completion: @escaping (BudgetModel) -> Void
+    ) {
+        coreDataManager.fetchCurrentBudget { budgetObject in
+            if let budgetObject = budgetObject {
+                let budget = BudgetModel.fromManagedObject(budgetObject)
+                completion(budget)
+            } else {
+                // 予算が見つからない場合はデフォルト予算を作成
+                let defaultBudget = BudgetModel.createMonthlyBudget(
+                    amount: Constants.Budget.defaultMonthlyAmount
+                )
+                
+                // TODO: CoreDataに保存するコードを追加
+                
+                completion(defaultBudget)
             }
+        }
+    }
+    
+    // 予算の使用状況をチェックし、必要に応じて通知を送信
+    static func checkBudgetUsage(
+        budget: BudgetModel,
+        usedAmount: Decimal
+    ) {
+        guard budget.amount > 0 else { return }
+        
+        let usagePercentage = Int(truncating: (usedAmount / budget.amount * 100) as NSNumber)
+        
+        // 予算警告通知
+        if usagePercentage >= budget.notifyThreshold && usagePercentage < Constants.Budget.defaultDangerThreshold {
+            NotificationManager.shared.scheduleBudgetWarning(percentage: usagePercentage)
         }
         
-        // 予算の使用状況をチェックし、必要に応じて通知を送信
-        static func checkBudgetUsage(
-            budget: BudgetModel,
-            usedAmount: Decimal
-        ) {
-            guard budget.amount > 0 else { return }
-            
-            let usagePercentage = Int(truncating: (usedAmount / budget.amount * 100) as NSNumber)
-            
-            // 予算警告通知
-            if usagePercentage >= budget.notifyThreshold && usagePercentage < Constants.Budget.defaultDangerThreshold {
-                NotificationManager.shared.scheduleBudgetWarning(percentage: usagePercentage)
-            }
-            
-            // 予算危険通知
-            if usagePercentage >= Constants.Budget.defaultDangerThreshold {
-                NotificationManager.shared.scheduleBudgetDanger(percentage: usagePercentage)
-            }
+        // 予算危険通知
+        if usagePercentage >= Constants.Budget.defaultDangerThreshold {
+            NotificationManager.shared.scheduleBudgetDanger(percentage: usagePercentage)
         }
     }
+}

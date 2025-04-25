@@ -1,10 +1,11 @@
-// GambleLedger/Common/Components/ChartComponents.swift
+// GambleLedger/Common/Components/ChartComponents.swift の修正
+// ChartDataPoint を ChartPointData にリネームして衝突を解消
 import SwiftUI
 import Charts
 
 // 利益推移グラフ
 struct ProfitChartView: View {
-    let data: [ChartDataPoint]
+    let data: [ChartPointData] // 名前変更
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -57,7 +58,7 @@ struct ProfitChartView: View {
 
 // ROI推移グラフ
 struct ROIChartView: View {
-    let data: [ChartDataPoint]
+    let data: [ChartPointData] // 名前変更
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -222,8 +223,8 @@ struct PieSliceView: View {
     }
 }
 
-// グラフ用のデータポイント
-struct ChartDataPoint: Identifiable {
+// グラフ用のデータポイント (名前変更 ChartDataPoint → ChartPointData)
+struct ChartPointData: Identifiable {
     let id = UUID()
     let date: Date
     let value: Double
@@ -234,23 +235,23 @@ struct ChartDataPoint: Identifiable {
     ScrollView {
         VStack(spacing: 20) {
             ProfitChartView(data: [
-                ChartDataPoint(date: Date().addingTimeInterval(-6*24*3600), value: -5000, label: "6日前"),
-                ChartDataPoint(date: Date().addingTimeInterval(-5*24*3600), value: -2000, label: "5日前"),
-                ChartDataPoint(date: Date().addingTimeInterval(-4*24*3600), value: 3000, label: "4日前"),
-                ChartDataPoint(date: Date().addingTimeInterval(-3*24*3600), value: 7000, label: "3日前"),
-                ChartDataPoint(date: Date().addingTimeInterval(-2*24*3600), value: 5000, label: "2日前"),
-                ChartDataPoint(date: Date().addingTimeInterval(-1*24*3600), value: 8000, label: "1日前"),
-                ChartDataPoint(date: Date(), value: 10000, label: "今日")
+                ChartPointData(date: Date().addingTimeInterval(-6*24*3600), value: -5000, label: "6日前"),
+                ChartPointData(date: Date().addingTimeInterval(-5*24*3600), value: -2000, label: "5日前"),
+                ChartPointData(date: Date().addingTimeInterval(-4*24*3600), value: 3000, label: "4日前"),
+                ChartPointData(date: Date().addingTimeInterval(-3*24*3600), value: 7000, label: "3日前"),
+                ChartPointData(date: Date().addingTimeInterval(-2*24*3600), value: 5000, label: "2日前"),
+                ChartPointData(date: Date().addingTimeInterval(-1*24*3600), value: 8000, label: "1日前"),
+                ChartPointData(date: Date(), value: 10000, label: "今日")
             ])
             
             ROIChartView(data: [
-                ChartDataPoint(date: Date().addingTimeInterval(-6*24*3600), value: -20, label: "6日前"),
-                ChartDataPoint(date: Date().addingTimeInterval(-5*24*3600), value: -10, label: "5日前"),
-                ChartDataPoint(date: Date().addingTimeInterval(-4*24*3600), value: 15, label: "4日前"),
-                ChartDataPoint(date: Date().addingTimeInterval(-3*24*3600), value: 25, label: "3日前"),
-                ChartDataPoint(date: Date().addingTimeInterval(-2*24*3600), value: 10, label: "2日前"),
-                ChartDataPoint(date: Date().addingTimeInterval(-1*24*3600), value: 30, label: "1日前"),
-                ChartDataPoint(date: Date(), value: 40, label: "今日")
+                ChartPointData(date: Date().addingTimeInterval(-6*24*3600), value: -20, label: "6日前"),
+                ChartPointData(date: Date().addingTimeInterval(-5*24*3600), value: -10, label: "5日前"),
+                ChartPointData(date: Date().addingTimeInterval(-4*24*3600), value: 15, label: "4日前"),
+                ChartPointData(date: Date().addingTimeInterval(-3*24*3600), value: 25, label: "3日前"),
+                ChartPointData(date: Date().addingTimeInterval(-2*24*3600), value: 10, label: "2日前"),
+                ChartPointData(date: Date().addingTimeInterval(-1*24*3600), value: 30, label: "1日前"),
+                ChartPointData(date: Date(), value: 40, label: "今日")
             ])
             
             GambleTypePieChartView(

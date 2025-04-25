@@ -165,9 +165,13 @@ class HistoryViewModel: ObservableObject {
         if let index = filteredRecords.firstIndex(where: { $0.id == id }) {
             filteredRecords.remove(at: index)
         }
-        
-        if let index = betRecords.firstIndex(where: { $0.id == id }) {
-            betRecords.remove(at: index)
-        }
-    }
-}
+                    // UIから削除
+                    if let index = filteredRecords.firstIndex(where: { $0.id == id }) {
+                        filteredRecords.remove(at: index)
+                    }
+                    
+                    if let index = betRecords.firstIndex(where: { $0.id == id }) {
+                        betRecords.remove(at: index)
+                    }
+                }
+            }

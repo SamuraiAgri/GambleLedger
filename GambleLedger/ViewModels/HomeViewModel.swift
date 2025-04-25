@@ -2,6 +2,7 @@
 import Foundation
 import Combine
 import CoreData
+import SwiftUI
 
 class HomeViewModel: ObservableObject {
     @Published var todayStats: DailyStats = DailyStats()

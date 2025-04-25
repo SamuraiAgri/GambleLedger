@@ -54,7 +54,7 @@ class ROICalculator {
         
         for i in 0..<totalCount {
             let startIndex = max(0, i - windowSize + 1)
-            let currentWindowSize = i - startIndex + 1
+            let _ = i - startIndex + 1  // currentWindowSize を _ に変更
             
             var windowBetSum: Decimal = 0
             var windowReturnSum: Decimal = 0
