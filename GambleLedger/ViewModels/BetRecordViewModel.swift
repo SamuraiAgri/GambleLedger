@@ -1,4 +1,4 @@
-// BetRecordViewModel.swift
+// GambleLedger/ViewModels/BetRecordViewModel.swift
 import Foundation
 import Combine
 import SwiftUI
@@ -34,14 +34,7 @@ class BetRecordViewModel: ObservableObject {
         coreDataManager.fetchGambleTypes { [weak self] results in
             guard let self = self else { return }
             
-            let types = results.map { object in
-                GambleTypeModel(
-                    id: object.value(forKey: "id") as? UUID ?? UUID(),
-                    name: object.value(forKey: "name") as? String ?? "",
-                    icon: object.value(forKey: "icon") as? String ?? "questionmark.circle",
-                    color: Color(hex: object.value(forKey: "color") as? String ?? "#000000")
-                )
-            }
+            let types = results.compactMap { GambleTypeModel.fromManagedObject($0) }
             
             DispatchQueue.main.async {
                 self.gambleTypes = types
@@ -154,11 +147,4 @@ class BetRecordViewModel: ObservableObject {
         returnAmount = ""
         memo = ""
     }
-}
-
-struct GambleTypeModel: Identifiable {
-    let id: UUID
-    let name: String
-    let icon: String
-    let color: Color
 }

@@ -264,77 +264,31 @@ extension GambleTypeDefinition {
         hasher.combine(name)
         let seed = hasher.finalize()
         
-        let uuidGenerator = UUID5(namespace: .namespace(.dns), name: "\(seed)")
-        return uuidGenerator.uuid
+        let namespace = UUID(uuidString: "6ba7b810-9dad-11d1-80b4-00c04fd430c8")!
+        return generateUUID5(namespace: namespace, name: "\(seed)")
     }
-}
-
-// UUID version 5の実装
-class UUID5 {
-    enum Namespace: String {
-        case dns = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
-        case url = "6ba7b811-9dad-11d1-80b4-00c04fd430c8"
-        case oid = "6ba7b812-9dad-11d1-80b4-00c04fd430c8"
-        case x500 = "6ba7b814-9dad-11d1-80b4-00c04fd430c8"
+    
+    // UUID version 5 の簡易実装
+    private func generateUUID5(namespace: UUID, name: String) -> UUID {
+        // 簡易実装: 名前をハッシュとして使用してUUIDを生成
+        var hasher = Hasher()
+        hasher.combine(namespace)
+        hasher.combine(name)
+        let hash = hasher.finalize()
         
-        var uuid: UUID {
-            return UUID(uuidString: self.rawValue)!
+        // ハッシュ値を16バイトに変換
+        var bytes = withUnsafeBytes(of: hash) { Array($0) }
+        while bytes.count < 16 {
+            bytes.append(0)
         }
-    }
-    
-    private let namespace: UUID
-    private let name: String
-    
-    init(namespace: UUID, name: String) {
-        self.namespace = namespace
-        self.name = name
-    }
-    
-    var uuid: UUID {
-        let nameData = name.data(using: .utf8)!
-        let namespaceBytes = namespace.uuid
+        bytes = Array(bytes.prefix(16))
         
-        var hash = SHA1()
-        hash.update(withBytes: namespaceBytes)
-        hash.update(withBytes: Array(nameData))
+        // UUID形式にする
+        bytes[6] = (bytes[6] & 0x0F) | 0x50 // バージョン5
+        bytes[8] = (bytes[8] & 0x3F) | 0x80 // バリアント
         
-        var digestBytes = hash.finalize()
-        
-        // Set version to 5
-        digestBytes[6] = (digestBytes[6] & 0x0F) | 0x50
-        
-        // Set variant to DCE 1.1
-        digestBytes[8] = (digestBytes[8] & 0x3F) | 0x80
-        
-        let uuid = NSUUID(uuidBytes: digestBytes)
+        // バイト配列からUUIDを生成
+        let uuid = NSUUID(uuidBytes: bytes)
         return uuid as UUID
-    }
-}
-
-// 簡易的なSHA1の実装（実際のアプリでは標準のCryptoKitを使うべき）
-struct SHA1 {
-    private var state: [UInt32] = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0]
-    private var bytesProcessed: UInt64 = 0
-    private var buffer = [UInt8](repeating: 0, count: 64)
-    private var bufferLength = 0
-    
-    mutating func update(withBytes bytes: [UInt8]) {
-        // 簡易実装のため実際の更新は行わない（実際のアプリではCryptoKit使用）
-        bytesProcessed += UInt64(bytes.count)
-    }
-    
-    mutating func finalize() -> [UInt8] {
-        // 実際のハッシュ計算は行わず、入力からの簡易的なハッシュを生成
-        let seed = bytesProcessed
-        var result = [UInt8](repeating: 0, count: 16)
-        
-        // シードから16バイトの値を生成
-        for i in 0..<8 {
-            let byteValue = UInt8((seed >> (i * 8)) & 0xFF)
-            result[i] = byteValue
-            result[15 - i] = byteValue ^ 0xFF
-        }
-        
-        return result
     }
 }

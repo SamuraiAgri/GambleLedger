@@ -70,13 +70,14 @@ class HistoryViewModel: ObservableObject {
             var displayModels: [BetDisplayModel] = []
             
             for record in records {
-                let gambleTypeID = record.value(forKey: "gambleTypeID") as? UUID
-                let gambleType = self.gambleTypes.first { $0.id == gambleTypeID }
-                
-                let betRecord = BetRecordModel.fromManagedObject(record)
-                let displayModel = betRecord.toDisplayModel(with: gambleType)
-                
-                displayModels.append(displayModel)
+                if let gambleTypeID = record.value(forKey: "gambleTypeID") as? UUID {
+                    let gambleType = self.gambleTypes.first { $0.id == gambleTypeID }
+                    
+                    let betRecord = BetRecordModel.fromManagedObject(record)
+                    let displayModel = betRecord.toDisplayModel(with: gambleType)
+                    
+                    displayModels.append(displayModel)
+                }
             }
             
             DispatchQueue.main.async {

@@ -1,113 +1,73 @@
-// GambleLedger/Common/Components/GambleTypeSelector.swift
+// GambleLedger/Common/Utilities/Constants.swift
 import SwiftUI
 
-struct GambleTypeSelector: View {
-    let gambleTypes: [GambleTypeModel]
-    @Binding var selectedTypeID: UUID?
-    let horizontalScroll: Bool
-    
-    init(
-        gambleTypes: [GambleTypeModel],
-        selectedTypeID: Binding<UUID?>,
-        horizontalScroll: Bool = true
-    ) {
-        self.gambleTypes = gambleTypes
-        self._selectedTypeID = selectedTypeID
-        self.horizontalScroll = horizontalScroll
+struct Constants {
+    struct GambleTypes {
+        // 競馬
+        static let horse = GambleTypeDefinition(
+            name: "競馬",
+            icon: "horseshoe",
+            color: "#1ABC9C"
+        )
+        
+        // 競艇
+        static let boat = GambleTypeDefinition(
+            name: "競艇",
+            icon: "sailboat",
+            color: "#3BAFDA"
+        )
+        
+        // 競輪
+        static let bike = GambleTypeDefinition(
+            name: "競輪",
+            icon: "bicycle",
+            color: "#4FC1E9"
+        )
+        
+        // スポーツベット
+        static let sports = GambleTypeDefinition(
+            name: "スポーツ",
+            icon: "sportscourt",
+            color: "#AC92EC"
+        )
+        
+        // パチンコ
+        static let pachinko = GambleTypeDefinition(
+            name: "パチンコ",
+            icon: "bitcoinsign.circle",
+            color: "#FFCE54"
+        )
+        
+        // その他
+        static let other = GambleTypeDefinition(
+            name: "その他",
+            icon: "dice",
+            color: "#A0D468"
+        )
     }
     
-    var body: some View {
-        Group {
-            if horizontalScroll {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        typeButtons
-                    }
-                    .padding(.vertical, 8)
-                }
-            } else {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
-                    typeButtons
-                }
-            }
-        }
+    struct Budget {
+        static let defaultMonthlyAmount: Decimal = 30000
+        static let defaultWarningThreshold: Int = 60 // 予算の60%で警告
+        static let defaultDangerThreshold: Int = 80  // 予算の80%で危険警告
     }
     
-    private var typeButtons: some View {
-        ForEach(gambleTypes) { type in
-            GambleTypeSelectorButton(
-                gambleType: type,
-                isSelected: selectedTypeID == type.id,
-                action: {
-                    selectedTypeID = type.id
-                }
-            )
-        }
-    }
-}
-
-// GambleTypeSelectorButton - 名前を変更して競合を解消
-struct GambleTypeSelectorButton: View {
-    let gambleType: GambleTypeModel
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack {
-                ZStack {
-                    Circle()
-                        .fill(isSelected ? gambleType.color : Color.gray.opacity(0.2))
-                        .frame(width: 60, height: 60)
-                    
-                    Image(systemName: gambleType.icon)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 30, height: 30)
-                        .foregroundColor(isSelected ? .white : .gray)
-                }
-                
-                Text(gambleType.name)
-                    .font(.caption)
-                    .foregroundColor(isSelected ? gambleType.color : .gray)
-            }
-        }
+    struct Notifications {
+        // 予算関連通知
+        static let budgetWarningTitle = "予算警告"
+        static let budgetWarningBody = "予算の%d%%を消化しました。注意しましょう。"
+        static let budgetDangerTitle = "予算危険"
+        static let budgetDangerBody = "予算の%d%%を消化しました！残りの予算を慎重に使いましょう。"
+        
+        // 連敗警告
+        static let consecutiveLossTitle = "連敗警告"
+        static let consecutiveLossBody = "%d連敗中です。ベット額の見直しを検討しましょう。"
     }
 }
 
-// プレビュー用のサンプルデータ
-struct GambleSelectorPreview: View {
-    @State private var selectedID: UUID? = nil
-    let sampleTypes = [
-        GambleTypeModel(id: UUID(), name: "競馬", icon: "horseshoe", color: .gambleHorse),
-        GambleTypeModel(id: UUID(), name: "競艇", icon: "sailboat", color: .gambleBoat),
-        GambleTypeModel(id: UUID(), name: "競輪", icon: "bicycle", color: .gambleBike),
-        GambleTypeModel(id: UUID(), name: "スポーツ", icon: "sportscourt", color: .gambleSports),
-        GambleTypeModel(id: UUID(), name: "パチンコ", icon: "bitcoinsign.circle", color: .gamblePachinko),
-        GambleTypeModel(id: UUID(), name: "その他", icon: "dice", color: .gambleOther)
-    ]
-    
-    var body: some View {
-        VStack(spacing: 30) {
-            Text("横スクロール")
-                .font(.headline)
-            GambleTypeSelector(
-                gambleTypes: sampleTypes,
-                selectedTypeID: $selectedID
-            )
-            
-            Text("グリッド")
-                .font(.headline)
-            GambleTypeSelector(
-                gambleTypes: sampleTypes,
-                selectedTypeID: $selectedID,
-                horizontalScroll: false
-            )
-        }
-        .padding()
-    }
-}
-
-#Preview {
-    GambleSelectorPreview()
+// ギャンブル種別の定義
+struct GambleTypeDefinition {
+    let name: String
+    let icon: String
+    let color: String
 }

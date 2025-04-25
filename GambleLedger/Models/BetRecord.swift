@@ -90,56 +90,54 @@ struct BetRecordModel: Identifiable {
 }
 
 // 表示用のモデル（UI表示に最適化）
-    // GambleLedger/Models/BetRecord.swift (続き)
-    // 表示用のモデル（UI表示に最適化）
-    struct BetDisplayModel: Identifiable {
-        let id: String
-        let date: Date
-        let gambleType: String
-        let gambleTypeColor: Color
-        let eventName: String
-        let bettingSystem: String
-        let betAmount: Double
-        let returnAmount: Double
-        let isWin: Bool
-        
-        var profit: Double {
-            returnAmount - betAmount
-        }
-        
-        var roi: Double {
-            if betAmount == 0 { return 0 }
-            return ((returnAmount / betAmount) - 1) * 100
-        }
-        
-        // フォーマット済みの文字列
-        var formattedDate: String {
-            date.formattedString(format: "yyyy/MM/dd HH:mm")
-        }
-        
-        var formattedBetAmount: String {
-            String(format: "¥%@", betAmount.formattedWithSeparator())
-        }
-        
-        var formattedReturnAmount: String {
-            String(format: "¥%@", returnAmount.formattedWithSeparator())
-        }
-        
-        var formattedProfit: String {
-            String(format: "¥%@", profit.formattedWithSeparator())
-        }
-        
-        var formattedROI: String {
-            String(format: "%.1f%%", roi)
-        }
+struct BetDisplayModel: Identifiable {
+    let id: String
+    let date: Date
+    let gambleType: String
+    let gambleTypeColor: Color
+    let eventName: String
+    let bettingSystem: String
+    let betAmount: Double
+    let returnAmount: Double
+    let isWin: Bool
+    
+    var profit: Double {
+        returnAmount - betAmount
     }
+    
+    var roi: Double {
+        if betAmount == 0 { return 0 }
+        return ((returnAmount / betAmount) - 1) * 100
+    }
+    
+    // フォーマット済みの文字列
+    var formattedDate: String {
+        date.formattedString(format: "yyyy/MM/dd HH:mm")
+    }
+    
+    var formattedBetAmount: String {
+        String(format: "¥%@", betAmount.formattedWithSeparator())
+    }
+    
+    var formattedReturnAmount: String {
+        String(format: "¥%@", returnAmount.formattedWithSeparator())
+    }
+    
+    var formattedProfit: String {
+        String(format: "¥%@", profit.formattedWithSeparator())
+    }
+    
+    var formattedROI: String {
+        String(format: "%.1f%%", roi)
+    }
+}
 
-    // Double型の拡張（金額のフォーマット用）
-    extension Double {
-        func formattedWithSeparator() -> String {
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .decimal
-            formatter.groupingSeparator = ","
-            return formatter.string(from: NSNumber(value: self)) ?? String(self)
-        }
+// Double型の拡張（金額のフォーマット用）
+extension Double {
+    func formattedWithSeparator() -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = ","
+        return formatter.string(from: NSNumber(value: self)) ?? String(self)
     }
+}

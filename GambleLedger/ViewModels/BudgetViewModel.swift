@@ -102,13 +102,17 @@ class BudgetViewModel: ObservableObject {
     // ギャンブル種別ごとの予算取得
     private func loadGambleTypeBudgets() {
         // 実装を省略（実際のアプリでは各ギャンブル種別の予算を取得・計算）
+        DispatchQueue.main.async {
+            self.gambleTypeBudgets = []  // 空の配列をセット
+        }
     }
     
     // 使用金額の計算
     private func calculateSpentAmount(startDate: Date, endDate: Date, completion: @escaping (Decimal) -> Void) {
         coreDataManager.fetchBetRecords(startDate: startDate, endDate: endDate) { records in
             let totalBet = records.reduce(Decimal(0)) { total, record in
-                total + ((record.value(forKey: "betAmount") as? NSDecimalNumber)?.decimalValue ?? 0)
+                let betAmount = (record.value(forKey: "betAmount") as? NSDecimalNumber)?.decimalValue ?? Decimal(0)
+                return total + betAmount
             }
             
             completion(totalBet)

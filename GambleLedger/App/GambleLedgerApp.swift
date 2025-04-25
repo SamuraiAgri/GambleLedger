@@ -1,4 +1,4 @@
-// GambleLedgerApp.swift
+// GambleLedger/App/GambleLedgerApp.swift
 import SwiftUI
 
 @main
@@ -23,4 +23,5 @@ class AppState: ObservableObject {
     @Published var showAddBetSheet: Bool = false
     @Published var alertMessage: String?
     @Published var showAlert: Bool = false
+    @Published var gambleTypes: [GambleTypeModel] = []
 }

@@ -3,7 +3,6 @@ import Foundation
 import Combine
 import SwiftUI
 
-// 既存のAppStateにメンバーとメソッドを追加
 extension AppState {
     // UIに必要な追加プロパティ
     var isDarkMode: Bool {
