@@ -118,8 +118,8 @@ class BudgetViewModel: ObservableObject {
             completion(totalBet)
         }
     }
-    
-    // 予算の保存
+
+    // saveBudget メソッド内の変更点：
     func saveBudget() {
         guard validateInput() else { return }
         
@@ -130,8 +130,8 @@ class BudgetViewModel: ObservableObject {
             return
         }
         
-        // 予算データの作成
-        let budgetData = BudgetModel(
+        // 予算データの作成（未使用変数を修正）
+        _ = BudgetModel(
             id: UUID(),
             amount: amountDecimal,
             startDate: selectedStartDate,

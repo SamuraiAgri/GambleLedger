@@ -75,12 +75,21 @@ class StatisticsViewModel: ObservableObject {
         coreDataManager.fetchBetRecords(startDate: startDate, endDate: endDate) { [weak self] records in
             guard let self = self else { return }
             
-            let totalBet = records.reduce(0) { $0 + ((($1.value(forKey: "betAmount") as? NSDecimalNumber)?.decimalValue) ?? 0) }
-            let totalReturn = records.reduce(0) { $0 + ((($1.value(forKey: "returnAmount") as? NSDecimalNumber)?.decimalValue) ?? 0) }
+            let totalBet = records.reduce(Decimal(0)) { result, record in
+                return result + ((record.value(forKey: "betAmount") as? NSDecimalNumber)?.decimalValue ?? Decimal(0))
+            }
+            
+            let totalReturn = records.reduce(Decimal(0)) { result, record in
+                return result + ((record.value(forKey: "returnAmount") as? NSDecimalNumber)?.decimalValue ?? Decimal(0))
+            }
+            
             let profit = totalReturn - totalBet
             let roi = totalBet > 0 ? ((totalReturn / totalBet) - 1) * 100 : 0
             
-            let wins = records.filter { $1.value(forKey: "isWin") as? Bool ?? false }.count
+            let wins = records.filter { record in
+                return record.value(forKey: "isWin") as? Bool ?? false
+            }.count
+            
             let winRate = records.isEmpty ? 0 : Double(wins) / Double(records.count) * 100
             
             DispatchQueue.main.async {

@@ -44,12 +44,23 @@ class HomeViewModel: ObservableObject {
         ) { [weak self] records in
             guard let self = self else { return }
             
-            let totalBet = records.reduce(0) { $0 + ($1.betAmount?.decimalValue ?? 0) }
-            let totalReturn = records.reduce(0) { $0 + ($1.returnAmount?.decimalValue ?? 0) }
+            let totalBet = records.reduce(Decimal(0)) { result, record in
+                let betAmount = (record.value(forKey: "betAmount") as? NSDecimalNumber)?.decimalValue ?? Decimal(0)
+                return result + betAmount
+            }
+            
+            let totalReturn = records.reduce(Decimal(0)) { result, record in
+                let returnAmount = (record.value(forKey: "returnAmount") as? NSDecimalNumber)?.decimalValue ?? Decimal(0)
+                return result + returnAmount
+            }
+            
             let profit = totalReturn - totalBet
             let roi = totalBet > 0 ? ((totalReturn / totalBet) - 1) * 100 : 0
             
-            let wins = records.filter { $0.isWin }.count
+            let wins = records.filter { record in
+                record.value(forKey: "isWin") as? Bool ?? false
+            }.count
+            
             let winRate = records.isEmpty ? 0 : Double(wins) / Double(records.count) * 100
             
             DispatchQueue.main.async {
@@ -75,16 +86,27 @@ class HomeViewModel: ObservableObject {
             guard let self = self else { return }
             
             let displayModels = records.map { record in
-                BetRecordDisplayModel(
-                    id: record.id?.uuidString ?? UUID().uuidString,
-                    date: record.date ?? Date(),
-                    gambleType: record.gambleType?.name ?? "不明",
-                    gambleTypeColor: Color(hex: record.gambleType?.color ?? "#000000"),
-                    eventName: record.eventName ?? "",
-                    bettingSystem: record.bettingSystem ?? "",
-                    betAmount: record.betAmount?.doubleValue ?? 0,
-                    returnAmount: record.returnAmount?.doubleValue ?? 0,
-                    isWin: record.isWin
+                let id = record.value(forKey: "id") as? UUID ?? UUID()
+                let date = record.value(forKey: "date") as? Date ?? Date()
+                let gambleTypeObject = record.value(forKey: "gambleType") as? NSManagedObject
+                let gambleTypeName = gambleTypeObject?.value(forKey: "name") as? String ?? "不明"
+                let gambleTypeColorHex = gambleTypeObject?.value(forKey: "color") as? String ?? "#000000"
+                let eventName = record.value(forKey: "eventName") as? String ?? ""
+                let bettingSystem = record.value(forKey: "bettingSystem") as? String ?? ""
+                let betAmount = (record.value(forKey: "betAmount") as? NSDecimalNumber)?.doubleValue ?? 0
+                let returnAmount = (record.value(forKey: "returnAmount") as? NSDecimalNumber)?.doubleValue ?? 0
+                let isWin = record.value(forKey: "isWin") as? Bool ?? false
+                
+                return BetRecordDisplayModel(
+                    id: id.uuidString,
+                    date: date,
+                    gambleType: gambleTypeName,
+                    gambleTypeColor: Color(hex: gambleTypeColorHex),
+                    eventName: eventName,
+                    bettingSystem: bettingSystem,
+                    betAmount: betAmount,
+                    returnAmount: returnAmount,
+                    isWin: isWin
                 )
             }
             

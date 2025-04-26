@@ -1,4 +1,4 @@
-// GambleLedger/Views/BetRecord/QuickBetRecordView.swift
+// GambleLedger/Views/Home/QuickBetRecordView.swift
 import SwiftUI
 
 struct QuickBetRecordView: View {
@@ -152,39 +152,46 @@ struct QuickBetRecordView: View {
         case 0:
             // 種別選択の検証
             if viewModel.selectedGambleTypeID == nil {
-                appState.showAlert(message: "ギャンブル種別を選択してください。")
+                appState.alertMessage = "ギャンブル種別を選択してください。"
+                appState.showAlert = true
                 return false
             }
         case 1:
             // イベント情報の検証
             if viewModel.eventName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                appState.showAlert(message: "イベント名を入力してください。")
+                appState.alertMessage = "イベント名を入力してください。"
+                appState.showAlert = true
                 return false
             }
             
             if viewModel.bettingSystem.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                appState.showAlert(message: "賭式を入力してください。")
+                appState.alertMessage = "賭式を入力してください。"
+                appState.showAlert = true
                 return false
             }
         case 2:
             // 金額情報の検証
             if viewModel.betAmount.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                appState.showAlert(message: "賭け金額を入力してください。")
+                appState.alertMessage = "賭け金額を入力してください。"
+                appState.showAlert = true
                 return false
             }
             
             if viewModel.returnAmount.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                appState.showAlert(message: "払戻金額を入力してください。")
+                appState.alertMessage = "払戻金額を入力してください。"
+                appState.showAlert = true
                 return false
             }
             
             if Decimal(string: viewModel.betAmount.replacingOccurrences(of: ",", with: "")) == nil {
-                appState.showAlert(message: "有効な賭け金額を入力してください。")
+                appState.alertMessage = "有効な賭け金額を入力してください。"
+                appState.showAlert = true
                 return false
             }
             
             if Decimal(string: viewModel.returnAmount.replacingOccurrences(of: ",", with: "")) == nil {
-                appState.showAlert(message: "有効な払戻金額を入力してください。")
+                appState.alertMessage = "有効な払戻金額を入力してください。"
+                appState.showAlert = true
                 return false
             }
         default:
@@ -314,7 +321,6 @@ struct AmountInfoStep: View {
                 }
                 
                 if let bet = Double(betAmount.replacingOccurrences(of: ",", with: "")),
-                   let ret = Double(returnAmount.replacingOccurrences(of: ",", with: "")),
                    bet > 0 {
                     
                     HStack {
@@ -328,7 +334,7 @@ struct AmountInfoStep: View {
                     HStack {
                         Text("回収率")
                         Spacer()
-                        Text("\(roi, specifier: "%.1f") %")
+                        Text(String(format: "%.1f%%", roi))
                             .foregroundColor(roi >= 0 ? .accentSuccess : .accentDanger)
                             .fontWeight(.bold)
                     }
@@ -430,7 +436,7 @@ struct ConfirmationStep: View {
                 
                 ConfirmationRow(
                     label: "回収率",
-                    value: "\(roi, specifier: "%.1f") %",
+                    value: String(format: "%.1f%%", NSDecimalNumber(decimal: roi).doubleValue),
                     icon: "percent",
                     color: roi >= 0 ? .accentSuccess : .accentDanger
                 )

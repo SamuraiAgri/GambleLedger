@@ -1,4 +1,5 @@
-// GambleLedger/Views/History/HistoryView.swift
+// HistoryView.swift の修正点
+
 import SwiftUI
 
 struct HistoryView: View {
@@ -312,9 +313,9 @@ struct QuickDateButton: View {
     }
 }
 
-// ベット履歴リスト
+// ベット履歴リスト - BetDisplayModel を使用するように修正
 struct BetHistoryList: View {
-    let records: [BetRecordDisplayModel]
+    let records: [BetDisplayModel]
     let onDelete: (String) -> Void
     
     var body: some View {
@@ -334,9 +335,9 @@ struct BetHistoryList: View {
     }
 }
 
-// ベット履歴セル
+// BetHistoryCell の部分を修正
 struct BetHistoryCell: View {
-    let record: BetRecordDisplayModel
+    let record: BetDisplayModel
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -352,12 +353,13 @@ struct BetHistoryCell: View {
                 
                 Spacer()
                 
-                // 日付
+                // 日付 - formattedDateプロパティを使用
                 Text(record.formattedDate)
                     .font(.caption)
                     .foregroundColor(.gray)
             }
             
+            // 残りのコードは変更なし
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(record.eventName)
@@ -372,7 +374,7 @@ struct BetHistoryCell: View {
                 
                 // 損益表示
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(record.profit >= 0 ? "勝ち" : "負け")
+                    Text(record.isWin ? "勝ち" : "負け")
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
