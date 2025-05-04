@@ -1,5 +1,4 @@
-// GambleLedger/Views/Budget/BudgetView.swift の修正
-// AddBudgetView 部分を BudgetView 内に統合
+// GambleLedger/Views/Budget/BudgetView.swift
 import SwiftUI
 
 struct BudgetView: View {
@@ -9,7 +8,7 @@ struct BudgetView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 24) {
                     // 現在の予算カード
                     if let currentBudget = viewModel.currentBudget {
                         CurrentBudgetCard(budget: currentBudget)
@@ -33,13 +32,16 @@ struct BudgetView: View {
                 }
                 .padding()
             }
+            .background(Color.backgroundPrimary.edgesIgnoringSafeArea(.all))
             .navigationTitle("予算管理")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         showingAddBudgetSheet = true
                     }) {
-                        Image(systemName: "plus")
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(.primaryColor)
+                            .font(.title3)
                     }
                 }
                 
@@ -48,6 +50,7 @@ struct BudgetView: View {
                         viewModel.loadBudgetData()
                     }) {
                         Image(systemName: "arrow.clockwise")
+                            .foregroundColor(.primaryColor)
                     }
                 }
             }
@@ -56,12 +59,28 @@ struct BudgetView: View {
             }
             .overlay(
                 viewModel.isLoading ?
-                    ProgressView()
-                        .scaleEffect(1.5)
-                        .progressViewStyle(CircularProgressViewStyle())
+                    ZStack {
+                        Color.black.opacity(0.2)
+                            .edgesIgnoringSafeArea(.all)
+                        
+                        VStack(spacing: 12) {
+                            ProgressView()
+                                .scaleEffect(1.5)
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            
+                            Text("読み込み中...")
+                                .foregroundColor(.white)
+                                .font(.caption)
+                                .padding(.top, 4)
+                        }
+                        .padding(24)
+                        .background(Color.gray.opacity(0.8))
+                        .cornerRadius(12)
+                    }
                     : nil
             )
         }
+        .withErrorHandling()
     }
 }
 
@@ -72,14 +91,17 @@ struct CurrentBudgetCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
+                Image(systemName: "banknote")
+                    .foregroundColor(.primaryColor)
+                
                 Text("今月の予算")
                     .font(.headline)
-                    .foregroundColor(.secondaryColor)
+                    .foregroundColor(.primaryColor)
                 
                 Spacer()
                 
                 Text(budget.period)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundColor(.gray)
             }
             
@@ -92,6 +114,7 @@ struct CurrentBudgetCard: View {
                     Text(budget.formattedTotalAmount)
                         .font(.title2)
                         .fontWeight(.bold)
+                        .foregroundColor(.primaryColor)
                 }
                 
                 Spacer()
@@ -104,13 +127,14 @@ struct CurrentBudgetCard: View {
                     Text(budget.formattedUsedAmount)
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(budget.usagePercentage > 80 ? .accentDanger : .primary)
+                        .foregroundColor(budget.usagePercentage > 80 ? .accentDanger : budget.usagePercentage > 60 ? .accentWarning : .gray)
                 }
             }
             
             Divider()
+                .background(Color.backgroundTertiary)
             
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text("残額")
                         .font(.subheadline)
@@ -118,7 +142,7 @@ struct CurrentBudgetCard: View {
                     Spacer()
                     
                     Text(budget.formattedRemainingAmount)
-                        .font(.subheadline)
+                        .font(.headline)
                         .fontWeight(.semibold)
                         .foregroundColor(budget.statusColor)
                 }
@@ -131,12 +155,16 @@ struct CurrentBudgetCard: View {
                 Text(budget.statusMessage)
                     .font(.caption)
                     .foregroundColor(budget.statusColor)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.top, 4)
             }
         }
         .padding()
-        .background(Color.backgroundSecondary)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.backgroundSecondary)
+                .shadow(color: Color.black.opacity(0.1), radius: 6, x: 0, y: 3)
+        )
     }
 }
 
@@ -156,31 +184,36 @@ struct BudgetUsageCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("予算使用状況")
-                .font(.headline)
-                .foregroundColor(.secondaryColor)
+            HStack {
+                Image(systemName: "chart.pie")
+                    .foregroundColor(.secondaryColor)
+                
+                Text("予算使用状況")
+                    .font(.headline)
+                    .foregroundColor(.secondaryColor)
+            }
             
-            // 円グラフの代わりに簡易的な表示
-            HStack(spacing: 20) {
+            // 円グラフの代わりに改良した表示
+            HStack(spacing: 24) {
                 ZStack {
                     Circle()
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 10)
-                        .frame(width: 100, height: 100)
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 12)
+                        .frame(width: 110, height: 110)
                     
                     Circle()
                         .trim(from: 0, to: CGFloat(min(percentageUsed / 100, 1.0)))
                         .stroke(
-                            percentageUsed < 60 ? Color.accentSuccess :
-                                percentageUsed < 80 ? Color.accentWarning : Color.accentDanger,
-                            lineWidth: 10
+                            getProgressColor(percentage: percentageUsed),
+                            lineWidth: 12
                         )
-                        .frame(width: 100, height: 100)
+                        .frame(width: 110, height: 110)
                         .rotationEffect(.degrees(-90))
                     
                     VStack {
                         Text("\(Int(percentageUsed))%")
                             .font(.title3)
                             .fontWeight(.bold)
+                            .foregroundColor(getProgressColor(percentage: percentageUsed))
                         
                         Text("使用済み")
                             .font(.caption)
@@ -188,7 +221,7 @@ struct BudgetUsageCard: View {
                     }
                 }
                 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 16) {
                     LegendItem(
                         color: .accentSuccess,
                         label: "残額",
@@ -196,23 +229,66 @@ struct BudgetUsageCard: View {
                     )
                     
                     LegendItem(
-                        color: .accentDanger,
+                        color: getProgressColor(percentage: percentageUsed),
                         label: "使用済み",
                         amount: usedAmount
                     )
+                    
+                    // 予測情報
+                    if totalAmount > 0 {
+                        let daysInMonth = Double(Calendar.current.range(of: .day, in: .month, for: Date())?.count ?? 30)
+                        let dayOfMonth = Double(Calendar.current.component(.day, from: Date()))
+                        let projectedUsage = (usedAmount / Decimal(dayOfMonth)) * Decimal(daysInMonth)
+                        
+                        if projectedUsage > totalAmount {
+                            HStack(spacing: 4) {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .foregroundColor(.accentWarning)
+                                    .font(.caption)
+                                
+                                Text("この使用ペースだと予算オーバーします")
+                                    .font(.caption)
+                                    .foregroundColor(.accentWarning)
+                            }
+                        }
+                    }
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical)
+            .padding(.vertical, 8)
             
             Text("期間: \(period)")
                 .font(.caption)
                 .foregroundColor(.gray)
+                .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding()
-        .background(Color.backgroundSecondary)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.backgroundSecondary)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [.secondaryColor.opacity(0.5), .secondaryColor]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1.5
+                )
+        )
+        .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
+    }
+    
+    private func getProgressColor(percentage: Double) -> Color {
+        if percentage < 60 {
+            return .accentSuccess
+        } else if percentage < 80 {
+            return .accentWarning
+        } else {
+            return .accentDanger
+        }
     }
 }
 
@@ -230,12 +306,14 @@ struct LegendItem: View {
             
             Text(label)
                 .font(.subheadline)
+                .foregroundColor(.primary)
             
             Spacer()
             
             Text(amount.formatted(.currency(code: "JPY")))
                 .font(.subheadline)
                 .fontWeight(.semibold)
+                .foregroundColor(.primary)
         }
     }
 }
@@ -246,26 +324,34 @@ struct GambleTypeBudgetsCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("ギャンブル種別別予算")
-                .font(.headline)
-                .foregroundColor(.secondaryColor)
+            HStack {
+                Image(systemName: "bookmark.circle")
+                    .foregroundColor(.secondaryColor)
+                
+                Text("ギャンブル種別別予算")
+                    .font(.headline)
+                    .foregroundColor(.secondaryColor)
+            }
             
             ForEach(budgets, id: \.id) { budget in
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         if let color = budget.gambleTypeColor {
                             Circle()
                                 .fill(color)
-                                .frame(width: 10, height: 10)
+                                .frame(width: 14, height: 14)
+                                .shadow(color: color.opacity(0.5), radius: 1, x: 0, y: 1)
                         }
                         
                         Text(budget.gambleType ?? "不明")
                             .font(.subheadline)
+                            .foregroundColor(.primary)
                         
                         Spacer()
                         
                         Text("\(budget.formattedUsagePercentage) 使用")
                             .font(.caption)
+                            .fontWeight(.medium)
                             .foregroundColor(budget.statusColor)
                     }
                     
@@ -291,13 +377,16 @@ struct GambleTypeBudgetsCard: View {
                 
                 if budget.id != budgets.last?.id {
                     Divider()
+                        .background(Color.backgroundTertiary)
                 }
             }
         }
         .padding()
-        .background(Color.backgroundSecondary)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.backgroundSecondary)
+        )
+        .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
     }
 }
 
@@ -306,39 +395,60 @@ struct NoBudgetView: View {
     let action: () -> Void
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             Image(systemName: "calendar.badge.plus")
-                .font(.system(size: 48))
-                .foregroundColor(.gray)
+                .font(.system(size: 50))
+                .foregroundColor(.secondaryColor)
+                .padding()
+                .background(
+                    Circle()
+                        .fill(Color.secondaryColor.opacity(0.1))
+                        .frame(width: 110, height: 110)
+                )
             
             Text("予算が設定されていません")
-                .font(.headline)
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(.primaryColor)
             
-            Text("月別予算を設定して、効果的な資金管理を始めましょう。")
+            Text("月別予算を設定して、効果的な資金管理を始めましょう。予算設定はギャンブルを健全に楽しむための第一歩です。")
                 .font(.subheadline)
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
+                .padding(.horizontal, 16)
             
             Button(action: action) {
-                Text("予算を設定する")
-                    .fontWeight(.semibold)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.primaryColor)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                    Text("予算を設定する")
+                        .fontWeight(.semibold)
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [.primaryColor, .primaryColor.opacity(0.8)]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .foregroundColor(.white)
+                .cornerRadius(10)
+                .shadow(color: Color.primaryColor.opacity(0.4), radius: 4, x: 0, y: 2)
             }
             .padding(.top, 8)
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .background(Color.backgroundSecondary)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.backgroundSecondary)
+        )
+        .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
     }
 }
 
-// AddBudgetViewをその場で定義（元々は別ファイルだったもの）
+// 予算設定シート
 struct AddBudgetSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: BudgetViewModel
@@ -350,17 +460,27 @@ struct AddBudgetSheetView: View {
                 Section(header: Text("予算金額")) {
                     HStack {
                         Text("金額")
+                            .foregroundColor(.primary)
+                        
+                        Spacer()
+                        
                         TextField("0", text: $viewModel.budgetAmount)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
+                            .foregroundColor(.primary)
+                        
                         Text("円")
+                            .foregroundColor(.gray)
                     }
                 }
                 
                 // 期間
                 Section(header: Text("期間")) {
                     DatePicker("開始日", selection: $viewModel.selectedStartDate, displayedComponents: .date)
+                        .accentColor(.primaryColor)
+                    
                     DatePicker("終了日", selection: $viewModel.selectedEndDate, displayedComponents: .date)
+                        .accentColor(.primaryColor)
                     
                     // クイック期間選択
                     HStack {
@@ -372,6 +492,7 @@ struct AddBudgetSheetView: View {
                             viewModel.selectedEndDate = today.endOfMonth()
                         }
                         .buttonStyle(.bordered)
+                        .tint(.primaryColor)
                         
                         Button("翌月") {
                             let today = Date()
@@ -382,6 +503,7 @@ struct AddBudgetSheetView: View {
                             }
                         }
                         .buttonStyle(.bordered)
+                        .tint(.secondaryColor)
                         
                         Spacer()
                     }
@@ -391,7 +513,10 @@ struct AddBudgetSheetView: View {
                 Section(header: Text("通知設定")) {
                     HStack {
                         Text("予算\(viewModel.notifyThreshold)%使用で通知")
+                            .foregroundColor(.primary)
+                        
                         Spacer()
+                        
                         Stepper("", value: $viewModel.notifyThreshold, in: 50...90, step: 5)
                             .labelsHidden()
                     }
@@ -403,7 +528,14 @@ struct AddBudgetSheetView: View {
                         Text("全ギャンブル").tag(nil as UUID?)
                         
                         ForEach(viewModel.gambleTypes) { type in
-                            Text(type.name).tag(type.id as UUID?)
+                            HStack {
+                                Circle()
+                                    .fill(type.color)
+                                    .frame(width: 10, height: 10)
+                                
+                                Text(type.name)
+                            }
+                            .tag(type.id as UUID?)
                         }
                     }
                     .pickerStyle(.menu)
@@ -412,14 +544,19 @@ struct AddBudgetSheetView: View {
                 // 保存ボタン
                 Section {
                     Button(action: {
-                        viewModel.saveBudget()
-                        dismiss()
+                        // タイマーを使用して、保存アクションを少し遅らせ、UIをブロックしないようにする
+                        viewModel.isLoading = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            viewModel.saveBudget()
+                            viewModel.isLoading = false
+                            dismiss()
+                        }
                     }) {
                         HStack {
                             Spacer()
                             if viewModel.isLoading {
                                 ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle())
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             } else {
                                 Text("予算を設定")
                                     .fontWeight(.bold)

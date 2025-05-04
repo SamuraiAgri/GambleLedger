@@ -3,50 +3,46 @@ import SwiftUI
 
 extension Color {
     // メインカラー
-    static let primaryColor = Color("PrimaryColor") // 深緑系 #1E6F5C
-    static let secondaryColor = Color("SecondaryColor") // 薄緑系 #29BB89
+    static let primaryColor = Color("PrimaryColor", bundle: nil) // カスタムダークグリーン #1E6F5C
+    static let secondaryColor = Color("SecondaryColor", bundle: nil) // カスタムティール #29BB89
     
     // アクセントカラー
-    static let accentSuccess = Color("AccentSuccess") // 利益表示用 #289672
-    static let accentWarning = Color("AccentWarning") // 注意喚起用 #FFCE54
-    static let accentDanger = Color("AccentDanger") // 損失表示用 #ED5565
+    static let accentSuccess = Color("AccentSuccess", bundle: nil) // 成功/利益表示用 #27AE60
+    static let accentWarning = Color("AccentWarning", bundle: nil) // 警告用 #F39C12
+    static let accentDanger = Color("AccentDanger", bundle: nil) // 失敗/損失表示用 #E74C3C
     
     // 背景カラー
-    static let backgroundPrimary = Color("BackgroundPrimary") // メイン背景 #F5F7FA
-    static let backgroundSecondary = Color("BackgroundSecondary") // カード背景 #FFFFFF
-    static let backgroundTertiary = Color("BackgroundTertiary") // 区切り背景 #E6E9ED
+    static let backgroundPrimary = Color("BackgroundPrimary", bundle: nil) // メイン背景 #F8F9FA
+    static let backgroundSecondary = Color("BackgroundSecondary", bundle: nil) // カード背景 #FFFFFF
+    static let backgroundTertiary = Color("BackgroundTertiary", bundle: nil) // 区切り背景 #E9ECEF
     
-    // ギャンブル種別カラー - より鮮やかなカラーに変更
-    static let gambleHorse = Color("GambleHorse") // 競馬 #16A085
-    static let gambleBoat = Color("GambleBoat") // 競艇 #2980B9
-    static let gambleBike = Color("GambleBike") // 競輪 #3498DB
-    static let gambleSports = Color("GambleSports") // スポーツベット #9B59B6
-    static let gamblePachinko = Color("GamblePachinko") // パチンコ #F1C40F
-    static let gambleOther = Color("GambleOther") // その他 #2ECC71
+    // ギャンブル種別カラー
+    static let gambleHorse = Color("GambleHorse", bundle: nil) // 競馬 #2E86C1
+    static let gambleBoat = Color("GambleBoat", bundle: nil) // 競艇 #3498DB
+    static let gambleBike = Color("GambleBike", bundle: nil) // 競輪 #9B59B6
+    static let gambleSports = Color("GambleSports", bundle: nil) // スポーツベット #8E44AD
+    static let gamblePachinko = Color("GamblePachinko", bundle: nil) // パチンコ #F1C40F
+    static let gambleOther = Color("GambleOther", bundle: nil) // その他 #16A085
     
-    // ダークモード対応グラデーションカラー - 新規追加
-    static let gradientPrimary = LinearGradient(
-        gradient: Gradient(colors: [Color("GradientStart"), Color("GradientEnd")]),
+    // グラデーションカラー
+    static let gradientSuccess = LinearGradient(
+        gradient: Gradient(colors: [Color("GradientSuccessStart", bundle: nil), Color("GradientSuccessEnd", bundle: nil)]),
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
     
-    // カード背景用グラデーション - 新規追加
+    static let gradientPrimary = LinearGradient(
+        gradient: Gradient(colors: [Color("GradientPrimaryStart", bundle: nil), Color("GradientPrimaryEnd", bundle: nil)]),
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    
+    // カード背景用グラデーション
     static let cardGradient = LinearGradient(
         gradient: Gradient(colors: [Color.white, Color.white.opacity(0.95)]),
         startPoint: .top,
         endPoint: .bottom
     )
-    
-    // カテゴリー区分用カラー - 新規追加
-    static let categoryColors: [Color] = [
-        Color("Category1"),  // #3498db
-        Color("Category2"),  // #2ecc71
-        Color("Category3"),  // #e74c3c
-        Color("Category4"),  // #f39c12
-        Color("Category5"),  // #9b59b6
-        Color("Category6")   // #1abc9c
-    ]
     
     // 16進数から色を生成
     init(hex: String) {
@@ -74,7 +70,7 @@ extension Color {
         )
     }
     
-    // 明暗調整関数 - 新規追加
+    // 明暗調整関数
     func adjusted(brightness: Double) -> Color {
         var hue: CGFloat = 0
         var saturation: CGFloat = 0
@@ -83,7 +79,7 @@ extension Color {
         
         #if canImport(UIKit)
         UIColor(self).getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
-        return Color(UIColor(hue: hue, saturation: saturation, brightness: min(max(CGFloat(brightness), 0), 1), alpha: alpha))
+        return Color(UIColor(hue: hue, saturation: saturation, brightness: min(max(CGFloat(brightness + brightness), 0), 1), alpha: alpha))
         #else
         return self
         #endif

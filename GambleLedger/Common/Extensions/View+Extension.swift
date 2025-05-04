@@ -2,7 +2,7 @@
 import SwiftUI
 
 extension View {
-    // カードスタイル
+    // ベーシックなカードスタイル
     func cardStyle(cornerRadius: CGFloat = 12) -> some View {
         self
             .padding()
@@ -11,19 +11,72 @@ extension View {
             .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
     
-    // グラデーションカードスタイル - 追加
-    func gradientCardStyle(cornerRadius: CGFloat = 12) -> some View {
+    // グラデーションを使用した高級感あるカードスタイル
+    func premiumCardStyle(cornerRadius: CGFloat = 12) -> some View {
         self
             .padding()
             .background(
-                LinearGradient(
-                    gradient: Gradient(colors: [Color.white, Color.white.opacity(0.95)]),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(Color.cardGradient)
+                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
             )
-            .cornerRadius(cornerRadius)
-            .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+    }
+    
+    // アクセントカラーを使ったカードスタイル
+    func accentCardStyle(color: Color, cornerRadius: CGFloat = 12) -> some View {
+        self
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(Color.backgroundSecondary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .stroke(color, lineWidth: 2)
+                    )
+            )
+            .shadow(color: color.opacity(0.2), radius: 5, x: 0, y: 2)
+    }
+    
+    // グラデーションアクセントを使ったカードスタイル
+    func gradientCardStyle(colors: [Color], cornerRadius: CGFloat = 12) -> some View {
+        self
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(Color.backgroundSecondary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .strokeBorder(
+                                LinearGradient(
+                                    gradient: Gradient(colors: colors),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                    )
+            )
+            .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
+    }
+    
+    // ボタンスタイル
+    func primaryButtonStyle() -> some View {
+        self
+            .padding()
+            .background(Color.primaryColor)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            .shadow(color: Color.primaryColor.opacity(0.4), radius: 5, x: 0, y: 3)
+    }
+    
+    // セカンダリボタンスタイル
+    func secondaryButtonStyle() -> some View {
+        self
+            .padding()
+            .background(Color.secondaryColor)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            .shadow(color: Color.secondaryColor.opacity(0.4), radius: 5, x: 0, y: 3)
     }
     
     // Viewの外接矩形サイズを取得
@@ -52,23 +105,7 @@ extension View {
         self.buttonStyle(PressableButtonStyle())
     }
     
-    // 高級感のあるボタンスタイル - 追加
-    func premiumButtonStyle(color: Color = .primaryColor) -> some View {
-        self
-            .padding()
-            .background(
-                LinearGradient(
-                    gradient: Gradient(colors: [color, color.adjusted(brightness: 0.8)]),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .foregroundColor(.white)
-            .cornerRadius(10)
-            .shadow(color: color.opacity(0.4), radius: 5, x: 0, y: 3)
-    }
-    
-    // アニメーションエフェクト - 追加
+    // アニメーションエフェクト
     func withBounceAnimation() -> some View {
         self.modifier(BounceAnimationModifier())
     }
@@ -91,6 +128,9 @@ extension View {
     func adaptToKeyboard() -> some View {
         modifier(KeyboardAdaptiveModifier())
     }
+    
+    // withErrorHandling メソッドはErrorHandler.swiftで定義されるため、
+    // ここでは削除して重複を避けます
 }
 
 // 押し込み効果のあるボタンスタイル
@@ -134,7 +174,7 @@ struct KeyboardAdaptiveModifier: ViewModifier {
     }
 }
 
-// バウンスアニメーション用モディファイア - 追加
+// バウンスアニメーション用モディファイア
 struct BounceAnimationModifier: ViewModifier {
     @State private var animate = false
     
@@ -143,8 +183,8 @@ struct BounceAnimationModifier: ViewModifier {
             .scaleEffect(animate ? 1.03 : 1)
             .animation(animate ?
                        Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true) :
-                       .default,
-                       value: animate)
+                        .default,
+                      value: animate)
             .onAppear {
                 animate = true
             }
