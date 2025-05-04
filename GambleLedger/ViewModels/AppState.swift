@@ -4,23 +4,41 @@ import Combine
 import SwiftUI
 
 extension AppState {
-    // UIに必要な追加プロパティ
-    var isDarkMode: Bool {
-        get { UserDefaults.standard.bool(forKey: "isDarkMode") }
-        set { UserDefaults.standard.set(newValue, forKey: "isDarkMode") }
+    // エラーハンドリング
+    func handleError(_ error: AppError) {
+        ErrorHandler.shared.handle(error)
     }
     
-    var useSystemTheme: Bool {
-        get { UserDefaults.standard.bool(forKey: "useSystemTheme") }
-        set { UserDefaults.standard.set(newValue, forKey: "useSystemTheme") }
+    // ギャンブル種別をデータベースに保存
+    private func saveGambleTypeToDatabase(_ type: GambleTypeModel) {
+        let context = PersistenceController.shared.container.viewContext
+        
+        // エンティティの作成
+        let newType = NSEntityDescription.insertNewObject(forEntityName: "GambleType", into: context)
+        
+        // 値の設定
+        newType.setValue(type.id, forKey: "id")
+        newType.setValue(type.name, forKey: "name")
+        newType.setValue(type.icon, forKey: "icon")
+        
+        // ColorをHEX文字列に変換する処理が必要
+        let colorHex = "#" + String(describing: type.color).replacingOccurrences(of: "Color(", with: "").replacingOccurrences(of: ")", with: "")
+        newType.setValue(colorHex, forKey: "color")
+        
+        newType.setValue(Date(), forKey: "createdAt")
+        newType.setValue(Date(), forKey: "updatedAt")
+        
+        // 保存
+        do {
+            try context.save()
+        } catch {
+            // エラーハンドリング
+            print("Failed to save gamble type: \(error)")
+            showAlertMessage("ギャンブル種別の保存に失敗しました")
+        }
     }
     
-    var notificationsEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: "notificationsEnabled") }
-        set { UserDefaults.standard.set(newValue, forKey: "notificationsEnabled") }
-    }
-    
-    // 共通データロード処理
+    // 既存のloadGambleTypesメソッドを修正
     func loadGambleTypes() {
         let coreDataManager = CoreDataManager.shared
         
@@ -39,18 +57,15 @@ extension AppState {
             if loadedTypes.isEmpty {
                 loadedTypes = GambleTypeModel.defaultTypes()
                 
-                // TODO: デフォルト値をCoreDataに保存するコードを追加
+                // デフォルト値をCoreDataに保存
+                for type in loadedTypes {
+                    self.saveGambleTypeToDatabase(type)
+                }
             }
             
             DispatchQueue.main.async {
                 self.gambleTypes = loadedTypes
             }
         }
-    }
-    
-    // アラートの表示
-    func showAlertMessage(_ message: String) {
-        alertMessage = message
-        showAlert = true
     }
 }

@@ -1,4 +1,4 @@
-// CoreDataManager.swift
+// GambleLedger/Models/CoreData/CoreDataManager.swift
 import CoreData
 import Foundation
 
@@ -139,6 +139,29 @@ class CoreDataManager {
                 completion(true)
             } catch {
                 print("Failed to save bet record: \(error)")
+                completion(false)
+            }
+        }
+    }
+    
+    // ベット記録の削除メソッド追加
+    func deleteBetRecord(id: UUID, completion: @escaping (Bool) -> Void) {
+        let context = viewContext
+        let request = NSFetchRequest<NSManagedObject>(entityName: "BetRecord")
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        
+        context.perform {
+            do {
+                let records = try context.fetch(request)
+                if let recordToDelete = records.first {
+                    context.delete(recordToDelete)
+                    try context.save()
+                    completion(true)
+                } else {
+                    completion(false)
+                }
+            } catch {
+                print("Delete error: \(error)")
                 completion(false)
             }
         }

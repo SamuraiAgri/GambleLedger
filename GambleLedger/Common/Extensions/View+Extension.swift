@@ -11,6 +11,21 @@ extension View {
             .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
     
+    // グラデーションカードスタイル - 追加
+    func gradientCardStyle(cornerRadius: CGFloat = 12) -> some View {
+        self
+            .padding()
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [Color.white, Color.white.opacity(0.95)]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .cornerRadius(cornerRadius)
+            .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+    }
+    
     // Viewの外接矩形サイズを取得
     func getSize(completion: @escaping (CGSize) -> Void) -> some View {
         self.background(
@@ -35,6 +50,27 @@ extension View {
     // タップ効果（少し押し込む感じ）
     func pressableStyle() -> some View {
         self.buttonStyle(PressableButtonStyle())
+    }
+    
+    // 高級感のあるボタンスタイル - 追加
+    func premiumButtonStyle(color: Color = .primaryColor) -> some View {
+        self
+            .padding()
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [color, color.adjusted(brightness: 0.8)]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            .shadow(color: color.opacity(0.4), radius: 5, x: 0, y: 3)
+    }
+    
+    // アニメーションエフェクト - 追加
+    func withBounceAnimation() -> some View {
+        self.modifier(BounceAnimationModifier())
     }
     
     // エラーメッセージを表示
@@ -94,6 +130,23 @@ struct KeyboardAdaptiveModifier: ViewModifier {
                 ) { _ in
                     keyboardHeight = 0
                 }
+            }
+    }
+}
+
+// バウンスアニメーション用モディファイア - 追加
+struct BounceAnimationModifier: ViewModifier {
+    @State private var animate = false
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(animate ? 1.03 : 1)
+            .animation(animate ?
+                       Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true) :
+                       .default,
+                       value: animate)
+            .onAppear {
+                animate = true
             }
     }
 }

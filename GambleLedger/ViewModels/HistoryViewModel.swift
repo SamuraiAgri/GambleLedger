@@ -18,6 +18,8 @@ class HistoryViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var sortOption: SortOption = .dateDesc
     @Published var gambleTypes: [GambleTypeModel] = []
+    @Published var errorMessage: String? = nil
+    @Published var showError: Bool = false
     
     private let coreDataManager: CoreDataManager
     private var cancellables = Set<AnyCancellable>()
@@ -123,19 +125,19 @@ class HistoryViewModel: ObservableObject {
             }
         }
         
-        // ギャンブル種別によるフィルタリング
-        if let typeID = selectedGambleTypeID {
-            let typeString = typeID.uuidString
+        // ギャンブル種別によるフィルタリング - ここを修正
+        if let typeID = selectedGambleTypeID, let selectedType = gambleTypes.first(where: { $0.id == typeID }) {
             filtered = filtered.filter { record in
-                // 実装の都合上、ここでは単純比較
-                record.gambleType.contains(typeString)
+                record.gambleType == selectedType.name
             }
         }
         
         // 日付範囲によるフィルタリング
+        let endOfFilterDay = Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: filterEndDate) ?? filterEndDate
+        
         filtered = filtered.filter { record in
             let recordDate = record.date
-            return recordDate >= filterStartDate && recordDate <= filterEndDate.endOfDay()
+            return recordDate >= filterStartDate && recordDate <= endOfFilterDay
         }
         
         // ソート
@@ -154,24 +156,46 @@ class HistoryViewModel: ObservableObject {
             filtered.sort { $0.profit < $1.profit }
         }
         
-        filteredRecords = filtered
+        DispatchQueue.main.async {
+            self.filteredRecords = filtered
+        }
     }
     
-    // ベット記録の削除
+    // ベット記録の削除 - エラーハンドリング追加
     func deleteBetRecord(id: String) {
-        // TODO: CoreDataから削除する処理を実装
-        
-        // UIから削除
-        if let index = filteredRecords.firstIndex(where: { $0.id == id }) {
-            filteredRecords.remove(at: index)
+        guard let uuid = UUID(uuidString: id) else {
+            self.showError(message: "無効なIDです")
+            return
         }
+        
+        isLoading = true
+        
+        // CoreDataから削除する処理を実装
+        coreDataManager.deleteBetRecord(id: uuid) { [weak self] success in
+            guard let self = self else { return }
+            
+            DispatchQueue.main.async {
+                self.isLoading = false
+                
+                if success {
                     // UIから削除
-                    if let index = filteredRecords.firstIndex(where: { $0.id == id }) {
-                        filteredRecords.remove(at: index)
+                    if let index = self.filteredRecords.firstIndex(where: { $0.id == id }) {
+                        self.filteredRecords.remove(at: index)
                     }
                     
-                    if let index = betRecords.firstIndex(where: { $0.id == id }) {
-                        betRecords.remove(at: index)
+                    if let index = self.betRecords.firstIndex(where: { $0.id == id }) {
+                        self.betRecords.remove(at: index)
                     }
+                } else {
+                    self.showError(message: "削除中にエラーが発生しました")
                 }
             }
+        }
+    }
+    
+    // エラー表示
+    private func showError(message: String) {
+        errorMessage = message
+        showError = true
+    }
+}

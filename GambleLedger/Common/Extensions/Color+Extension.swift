@@ -1,4 +1,4 @@
-// Color+Extension.swift
+// GambleLedger/Common/Extensions/Color+Extension.swift
 import SwiftUI
 
 extension Color {
@@ -16,13 +16,37 @@ extension Color {
     static let backgroundSecondary = Color("BackgroundSecondary") // カード背景 #FFFFFF
     static let backgroundTertiary = Color("BackgroundTertiary") // 区切り背景 #E6E9ED
     
-    // ギャンブル種別カラー
-    static let gambleHorse = Color("GambleHorse") // 競馬 #1ABC9C
-    static let gambleBoat = Color("GambleBoat") // 競艇 #3BAFDA
-    static let gambleBike = Color("GambleBike") // 競輪 #4FC1E9
-    static let gambleSports = Color("GambleSports") // スポーツベット #AC92EC
-    static let gamblePachinko = Color("GamblePachinko") // パチンコ #FFCE54
-    static let gambleOther = Color("GambleOther") // その他 #A0D468
+    // ギャンブル種別カラー - より鮮やかなカラーに変更
+    static let gambleHorse = Color("GambleHorse") // 競馬 #16A085
+    static let gambleBoat = Color("GambleBoat") // 競艇 #2980B9
+    static let gambleBike = Color("GambleBike") // 競輪 #3498DB
+    static let gambleSports = Color("GambleSports") // スポーツベット #9B59B6
+    static let gamblePachinko = Color("GamblePachinko") // パチンコ #F1C40F
+    static let gambleOther = Color("GambleOther") // その他 #2ECC71
+    
+    // ダークモード対応グラデーションカラー - 新規追加
+    static let gradientPrimary = LinearGradient(
+        gradient: Gradient(colors: [Color("GradientStart"), Color("GradientEnd")]),
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    
+    // カード背景用グラデーション - 新規追加
+    static let cardGradient = LinearGradient(
+        gradient: Gradient(colors: [Color.white, Color.white.opacity(0.95)]),
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    
+    // カテゴリー区分用カラー - 新規追加
+    static let categoryColors: [Color] = [
+        Color("Category1"),  // #3498db
+        Color("Category2"),  // #2ecc71
+        Color("Category3"),  // #e74c3c
+        Color("Category4"),  // #f39c12
+        Color("Category5"),  // #9b59b6
+        Color("Category6")   // #1abc9c
+    ]
     
     // 16進数から色を生成
     init(hex: String) {
@@ -48,5 +72,20 @@ extension Color {
             blue: Double(b) / 255,
             opacity: Double(a) / 255
         )
+    }
+    
+    // 明暗調整関数 - 新規追加
+    func adjusted(brightness: Double) -> Color {
+        var hue: CGFloat = 0
+        var saturation: CGFloat = 0
+        var brightness: CGFloat = 0
+        var alpha: CGFloat = 0
+        
+        #if canImport(UIKit)
+        UIColor(self).getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
+        return Color(UIColor(hue: hue, saturation: saturation, brightness: min(max(CGFloat(brightness), 0), 1), alpha: alpha))
+        #else
+        return self
+        #endif
     }
 }

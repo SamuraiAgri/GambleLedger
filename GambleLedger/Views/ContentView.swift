@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var errorHandler: ErrorHandler
     @Environment(\.managedObjectContext) private var viewContext
 
     var body: some View {
@@ -45,11 +46,37 @@ struct ContentView: View {
                 dismissButton: .default(Text("OK"))
             )
         }
+        .overlay(
+            errorHandler.showingError ?
+                VStack {
+                    Spacer()
+                    
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.white)
+                        
+                        Text(errorHandler.currentError?.message ?? "エラーが発生しました")
+                            .foregroundColor(.white)
+                            .font(.subheadline)
+                        
+                        Spacer()
+                        
+                        Button(action: {
+                            errorHandler.dismiss()
+                        }) {
+                            Image(systemName: "xmark")
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .padding()
+                    .background(Color.accentDanger)
+                    .cornerRadius(10)
+                    .padding(.horizontal)
+                    .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 3)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(.spring(), value: errorHandler.showingError)
+                : nil
+        )
     }
-}
-
-#Preview {
-    ContentView()
-        .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
-        .environmentObject(AppState())
 }

@@ -5,23 +5,31 @@ import SwiftUI
 struct GambleLedgerApp: App {
     let persistenceController = PersistenceController.shared
     @StateObject private var appState = AppState()
+    @StateObject private var errorHandler = ErrorHandler.shared
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .environmentObject(appState)
+                .environmentObject(errorHandler)
+                .withErrorHandling()
+                .accentColor(.primaryColor)
+                .preferredColorScheme(appState.useSystemTheme ? nil : (appState.isDarkMode ? .dark : .light))
+                .onAppear {
+                    // アプリ起動時の処理
+                    appState.loadGambleTypes()
+                    setupAppearance()
+                }
         }
     }
-}
-
-// AppState.swift
-import Foundation
-
-class AppState: ObservableObject {
-    @Published var selectedTab: Int = 0
-    @Published var showAddBetSheet: Bool = false
-    @Published var alertMessage: String?
-    @Published var showAlert: Bool = false
-    @Published var gambleTypes: [GambleTypeModel] = []
+    
+    // UIの外観設定
+    private func setupAppearance() {
+        // ナビゲーションバーのスタイル設定
+        UINavigationBar.appearance().tintColor = UIColor(Color.primaryColor)
+        
+        // タブバーのスタイル設定
+        UITabBar.appearance().tintColor = UIColor(Color.primaryColor)
+    }
 }
