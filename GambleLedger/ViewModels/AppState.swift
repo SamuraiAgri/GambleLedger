@@ -2,8 +2,22 @@
 import Foundation
 import Combine
 import SwiftUI
+import CoreData
 
-extension AppState {
+class AppState: ObservableObject {
+    @Published var selectedTab: Int = 0
+    @Published var showAddBetSheet: Bool = false
+    @Published var showAlert: Bool = false
+    @Published var alertMessage: String?
+    @Published var gambleTypes: [GambleTypeModel] = []
+    @Published var isDarkMode: Bool = false
+    @Published var useSystemTheme: Bool = true
+    
+    func showAlertMessage(_ message: String) {
+        alertMessage = message
+        showAlert = true
+    }
+    
     // エラーハンドリング
     func handleError(_ error: AppError) {
         ErrorHandler.shared.handle(error)
