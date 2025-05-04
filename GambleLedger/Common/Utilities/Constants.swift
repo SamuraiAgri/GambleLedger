@@ -6,8 +6,8 @@ struct Constants {
         // 競馬
         static let horse = GambleTypeDefinition(
             name: "競馬",
-            icon: "flag.fill", // より確実に表示されるアイコン
-            color: "#1E88E5"
+            icon: "sportscourt", // より確実に表示されるアイコン
+            color: "#00ACC1"
         )
         
         // 競艇
