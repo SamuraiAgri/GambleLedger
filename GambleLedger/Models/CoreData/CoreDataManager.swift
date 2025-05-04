@@ -10,6 +10,23 @@ class CoreDataManager {
         return persistenceController.container.viewContext
     }
     
+    // データ取得の新たな処理を追加
+    private func executeAsyncFetch<T>(_ request: NSFetchRequest<T>, completion: @escaping ([T]) -> Void) where T: NSFetchRequestResult {
+        // バックグラウンドコンテキストを作成して処理を実行
+        let context = persistenceController.container.newBackgroundContext()
+        context.automaticallyMergesChangesFromParent = true
+        
+        context.perform {
+            do {
+                let results = try context.fetch(request)
+                completion(results)
+            } catch {
+                print("Error executing fetch request: \(error)")
+                completion([])
+            }
+        }
+    }
+    
     // MARK: - ベット記録の取得
     
     func fetchBetRecords(
@@ -44,16 +61,8 @@ class CoreDataManager {
             request.fetchLimit = limit
         }
         
-        // 非同期で実行
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                let results = try self.viewContext.fetch(request)
-                completion(results)
-            } catch {
-                print("Error fetching bet records: \(error)")
-                completion([])
-            }
-        }
+        // 改善したフェッチ実行
+        executeAsyncFetch(request, completion: completion)
     }
     
     // MARK: - ギャンブル種別の取得
@@ -62,15 +71,8 @@ class CoreDataManager {
         let request = NSFetchRequest<NSManagedObject>(entityName: "GambleType")
         request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
         
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                let results = try self.viewContext.fetch(request)
-                completion(results)
-            } catch {
-                print("Error fetching gamble types: \(error)")
-                completion([])
-            }
-        }
+        // 改善したフェッチ実行
+        executeAsyncFetch(request, completion: completion)
     }
     
     // MARK: - 予算の取得
@@ -94,14 +96,9 @@ class CoreDataManager {
         
         request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
         
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                let results = try self.viewContext.fetch(request)
-                completion(results.first)
-            } catch {
-                print("Error fetching budget: \(error)")
-                completion(nil)
-            }
+        // 改善したフェッチ実行
+        executeAsyncFetch(request) { results in
+            completion(results.first)
         }
     }
     
@@ -117,9 +114,10 @@ class CoreDataManager {
         memo: String = "",
         completion: @escaping (Bool) -> Void
     ) {
-        let context = viewContext
+        // バックグラウンドコンテキストで保存処理を実行
+        let context = persistenceController.container.newBackgroundContext()
         
-        context.performAndWait {
+        context.perform {
             let newRecord = NSEntityDescription.insertNewObject(forEntityName: "BetRecord", into: context)
             
             newRecord.setValue(UUID(), forKey: "id")
@@ -136,17 +134,26 @@ class CoreDataManager {
             
             do {
                 try context.save()
-                completion(true)
+                
+                // メインスレッドでコールバック実行
+                DispatchQueue.main.async {
+                    completion(true)
+                }
             } catch {
                 print("Failed to save bet record: \(error)")
-                completion(false)
+                
+                // メインスレッドでコールバック実行
+                DispatchQueue.main.async {
+                    completion(false)
+                }
             }
         }
     }
     
-    // ベット記録の削除メソッド追加
+    // ベット記録の削除メソッド
     func deleteBetRecord(id: UUID, completion: @escaping (Bool) -> Void) {
-        let context = viewContext
+        // バックグラウンドコンテキストで削除処理を実行
+        let context = persistenceController.container.newBackgroundContext()
         let request = NSFetchRequest<NSManagedObject>(entityName: "BetRecord")
         request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
         
@@ -156,16 +163,22 @@ class CoreDataManager {
                 if let recordToDelete = records.first {
                     context.delete(recordToDelete)
                     try context.save()
-                    completion(true)
+                    
+                    DispatchQueue.main.async {
+                        completion(true)
+                    }
                 } else {
-                    completion(false)
+                    DispatchQueue.main.async {
+                        completion(false)
+                    }
                 }
             } catch {
                 print("Delete error: \(error)")
-                completion(false)
+                
+                DispatchQueue.main.async {
+                    completion(false)
+                }
             }
         }
     }
-    
-    // その他のCRUD操作メソッド省略
 }

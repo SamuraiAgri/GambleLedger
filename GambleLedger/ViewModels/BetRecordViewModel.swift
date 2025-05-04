@@ -31,6 +31,7 @@ class BetRecordViewModel: ObservableObject {
     func loadGambleTypes() {
         isLoading = true
         
+        // do-catch ブロックを使用せずに処理
         coreDataManager.fetchGambleTypes { [weak self] results in
             guard let self = self else { return }
             
@@ -53,21 +54,30 @@ class BetRecordViewModel: ObservableObject {
         
         isLoading = true
         
-        guard let gambleTypeID = selectedGambleTypeID,
-              let betAmountDecimal = Decimal(string: betAmount.replacingOccurrences(of: ",", with: "")),
-              let returnAmountDecimal = Decimal(string: returnAmount.replacingOccurrences(of: ",", with: "")) else {
-            showError(message: "入力データの変換に失敗しました。")
+        // 入力値の変換を強化 - 条件バインディングの修正
+        guard let gambleTypeID = selectedGambleTypeID else {
+            showError(message: "ギャンブル種別を選択してください。")
+            return
+        }
+        
+        // 文字列から数値への変換を改善
+        let betAmountText = betAmount.replacingOccurrences(of: ",", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let returnAmountText = returnAmount.replacingOccurrences(of: ",", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard let betAmountDecimal = Decimal(string: betAmountText),
+              let returnAmountDecimal = Decimal(string: returnAmountText) else {
+            showError(message: "入力データの変換に失敗しました。正しい数値を入力してください。")
             return
         }
         
         coreDataManager.saveBetRecord(
             date: selectedDate,
             gambleTypeID: gambleTypeID,
-            eventName: eventName,
-            bettingSystem: bettingSystem,
+            eventName: eventName.trimmingCharacters(in: .whitespacesAndNewlines),
+            bettingSystem: bettingSystem.trimmingCharacters(in: .whitespacesAndNewlines),
             betAmount: betAmountDecimal,
             returnAmount: returnAmountDecimal,
-            memo: memo
+            memo: memo.trimmingCharacters(in: .whitespacesAndNewlines)
         ) { [weak self] success in
             guard let self = self else { return }
             
@@ -79,11 +89,11 @@ class BetRecordViewModel: ObservableObject {
                     self.showSuccessMessage = true
                     
                     // 3秒後に成功メッセージを非表示
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                        self.showSuccessMessage = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+                        self?.showSuccessMessage = false
                     }
                 } else {
-                    self.showError(message: "データの保存に失敗しました。")
+                    self.showError(message: "データの保存に失敗しました。もう一度お試しください。")
                 }
             }
         }

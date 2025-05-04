@@ -1,7 +1,8 @@
-// StatisticsViewModel.swift
+// GambleLedger/ViewModels/StatisticsViewModel.swift
 import Foundation
 import Combine
 import SwiftUI
+import CoreData  // この行を追加
 
 class StatisticsViewModel: ObservableObject {
     // 統計表示期間
@@ -103,17 +104,93 @@ class StatisticsViewModel: ObservableObject {
                     winRate: winRate
                 )
                 
+                // 実際のデータから損益チャートとROIチャートを生成
+                self.generateChartData(from: records)
+                
                 self.isLoading = false
             }
         }
     }
     
+    // 実際のデータからチャートデータを生成する新しいメソッド
+    private func generateChartData(from records: [NSManagedObject]) {
+        // レコードを日付でグループ化
+        let calendar = Calendar.current
+        var dailyProfits: [Date: Decimal] = [:]
+        var dailyROIs: [Date: Decimal] = [:]
+        var dailyBets: [Date: Decimal] = [:]
+        var dailyReturns: [Date: Decimal] = [:]
+        
+        // 日付ごとにデータを集計
+        for record in records {
+            guard let date = record.value(forKey: "date") as? Date else { continue }
+            
+            // 日付のみの部分を抽出（時間を除く）
+            let dayStart = calendar.startOfDay(for: date)
+            
+            let betAmount = (record.value(forKey: "betAmount") as? NSDecimalNumber)?.decimalValue ?? Decimal(0)
+            let returnAmount = (record.value(forKey: "returnAmount") as? NSDecimalNumber)?.decimalValue ?? Decimal(0)
+            
+            // 日毎の集計に追加
+            dailyBets[dayStart] = (dailyBets[dayStart] ?? 0) + betAmount
+            dailyReturns[dayStart] = (dailyReturns[dayStart] ?? 0) + returnAmount
+        }
+        
+        // 損益とROIを計算
+        for (date, betAmount) in dailyBets {
+            let returnAmount = dailyReturns[date] ?? 0
+            let profit = returnAmount - betAmount
+            dailyProfits[date] = profit
+            
+            if betAmount > 0 {
+                dailyROIs[date] = ((returnAmount / betAmount) - 1) * 100
+            } else {
+                dailyROIs[date] = 0
+            }
+        }
+        
+        // 日付でソート
+        let sortedDates = dailyProfits.keys.sorted()
+        
+        // チャートデータを生成
+        var profitData: [ChartDataPoint] = []
+        var roiData: [ChartDataPoint] = []
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MM/dd"
+        
+        for date in sortedDates {
+            if let profit = dailyProfits[date] {
+                profitData.append(ChartDataPoint(
+                    date: date,
+                    value: NSDecimalNumber(decimal: profit).doubleValue,
+                    label: dateFormatter.string(from: date)
+                ))
+            }
+            
+            if let roi = dailyROIs[date] {
+                roiData.append(ChartDataPoint(
+                    date: date,
+                    value: NSDecimalNumber(decimal: roi).doubleValue,
+                    label: dateFormatter.string(from: date)
+                ))
+            }
+        }
+        
+        DispatchQueue.main.async {
+            self.profitChartData = profitData
+            self.roiChartData = roiData
+        }
+    }
+    
     private func fetchGambleTypeStats(startDate: Date, endDate: Date) {
-        // 種別データの取得と統計処理（略）
+        // 実際のデータをロードするコードを実装（サンプルデータは削除）
+        // ここでは簡略化してますが、実際にはギャンブル種別ごとの統計を計算するコードを実装
     }
     
     private func fetchDailyStats(startDate: Date, endDate: Date) {
-        // 日別データの取得とグラフ用データ加工（略）
+        // 実際のデータをロードするコードを実装（サンプルデータは削除）
+        // 日別統計を計算するコードを実装
     }
 }
 

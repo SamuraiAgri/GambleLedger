@@ -6,46 +6,47 @@ struct Constants {
         // 競馬
         static let horse = GambleTypeDefinition(
             name: "競馬",
-            icon: "horseshoe",
-            color: "#1ABC9C"
+            icon: "flag.fill", // より確実に表示されるアイコン
+            color: "#1E88E5"
         )
         
         // 競艇
         static let boat = GambleTypeDefinition(
             name: "競艇",
-            icon: "sailboat",
-            color: "#3BAFDA"
+            icon: "sailboat.fill",
+            color: "#039BE5"
         )
         
         // 競輪
         static let bike = GambleTypeDefinition(
             name: "競輪",
-            icon: "bicycle",
-            color: "#4FC1E9"
+            icon: "bicycle.circle.fill",
+            color: "#8E24AA"
         )
         
         // スポーツベット
         static let sports = GambleTypeDefinition(
             name: "スポーツ",
-            icon: "sportscourt",
-            color: "#AC92EC"
+            icon: "sportscourt.fill",
+            color: "#7B1FA2"
         )
         
         // パチンコ
         static let pachinko = GambleTypeDefinition(
             name: "パチンコ",
-            icon: "bitcoinsign.circle",
-            color: "#FFCE54"
+            icon: "dollarsign.circle.fill",
+            color: "#FFC107"
         )
         
         // その他
         static let other = GambleTypeDefinition(
             name: "その他",
-            icon: "dice",
-            color: "#A0D468"
+            icon: "dice.fill",
+            color: "#00ACC1"
         )
     }
     
+    // 以下は変更なし
     struct Budget {
         static let defaultMonthlyAmount: Decimal = 30000
         static let defaultWarningThreshold: Int = 60 // 予算の60%で警告

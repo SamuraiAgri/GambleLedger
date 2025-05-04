@@ -3,36 +3,36 @@ import SwiftUI
 
 extension Color {
     // メインカラー
-    static let primaryColor = Color("PrimaryColor", bundle: nil) // カスタムダークグリーン #1E6F5C
-    static let secondaryColor = Color("SecondaryColor", bundle: nil) // カスタムティール #29BB89
+    static let primaryColor = Color(hex: "#2E7D32") // より鮮やかな緑色
+    static let secondaryColor = Color(hex: "#00796B") // ティール色
     
     // アクセントカラー
-    static let accentSuccess = Color("AccentSuccess", bundle: nil) // 成功/利益表示用 #27AE60
-    static let accentWarning = Color("AccentWarning", bundle: nil) // 警告用 #F39C12
-    static let accentDanger = Color("AccentDanger", bundle: nil) // 失敗/損失表示用 #E74C3C
+    static let accentSuccess = Color(hex: "#43A047") // 成功/利益表示用
+    static let accentWarning = Color(hex: "#FF9800") // 警告用
+    static let accentDanger = Color(hex: "#D32F2F") // 失敗/損失表示用
     
     // 背景カラー
-    static let backgroundPrimary = Color("BackgroundPrimary", bundle: nil) // メイン背景 #F8F9FA
-    static let backgroundSecondary = Color("BackgroundSecondary", bundle: nil) // カード背景 #FFFFFF
-    static let backgroundTertiary = Color("BackgroundTertiary", bundle: nil) // 区切り背景 #E9ECEF
+    static let backgroundPrimary = Color(hex: "#F5F5F5") // メイン背景
+    static let backgroundSecondary = Color(hex: "#FFFFFF") // カード背景
+    static let backgroundTertiary = Color(hex: "#EEEEEE") // 区切り背景
     
-    // ギャンブル種別カラー
-    static let gambleHorse = Color("GambleHorse", bundle: nil) // 競馬 #2E86C1
-    static let gambleBoat = Color("GambleBoat", bundle: nil) // 競艇 #3498DB
-    static let gambleBike = Color("GambleBike", bundle: nil) // 競輪 #9B59B6
-    static let gambleSports = Color("GambleSports", bundle: nil) // スポーツベット #8E44AD
-    static let gamblePachinko = Color("GamblePachinko", bundle: nil) // パチンコ #F1C40F
-    static let gambleOther = Color("GambleOther", bundle: nil) // その他 #16A085
+    // ギャンブル種別カラー - より鮮やかなカラーパレット
+    static let gambleHorse = Color(hex: "#1E88E5") // 競馬
+    static let gambleBoat = Color(hex: "#039BE5") // 競艇
+    static let gambleBike = Color(hex: "#8E24AA") // 競輪
+    static let gambleSports = Color(hex: "#7B1FA2") // スポーツベット
+    static let gamblePachinko = Color(hex: "#FFC107") // パチンコ
+    static let gambleOther = Color(hex: "#00ACC1") // その他
     
     // グラデーションカラー
     static let gradientSuccess = LinearGradient(
-        gradient: Gradient(colors: [Color("GradientSuccessStart", bundle: nil), Color("GradientSuccessEnd", bundle: nil)]),
+        gradient: Gradient(colors: [Color(hex: "#43A047"), Color(hex: "#2E7D32")]),
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
     
     static let gradientPrimary = LinearGradient(
-        gradient: Gradient(colors: [Color("GradientPrimaryStart", bundle: nil), Color("GradientPrimaryEnd", bundle: nil)]),
+        gradient: Gradient(colors: [Color(hex: "#2E7D32"), Color(hex: "#1B5E20")]),
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
