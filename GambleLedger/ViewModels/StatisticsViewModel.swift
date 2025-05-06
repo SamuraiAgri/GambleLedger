@@ -2,7 +2,7 @@
 import Foundation
 import Combine
 import SwiftUI
-import CoreData  // この行を追加
+import CoreData
 
 class StatisticsViewModel: ObservableObject {
     // 統計表示期間
@@ -24,8 +24,14 @@ class StatisticsViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     
     // グラフデータ
-    @Published var profitChartData: [ChartDataPoint] = []
-    @Published var roiChartData: [ChartDataPoint] = []
+    @Published var profitChartData: [ChartPointData] = []
+    @Published var roiChartData: [ChartPointData] = []
+    
+    // 追加の統計データ
+    @Published var averageBetAmount: Decimal = 0
+    @Published var maxWinAmount: Decimal = 0
+    @Published var maxLossAmount: Decimal = 0
+    @Published var maxWinStreak: Int = 0
     
     private let coreDataManager: CoreDataManager
     private var cancellables = Set<AnyCancellable>()
@@ -33,6 +39,10 @@ class StatisticsViewModel: ObservableObject {
     init(coreDataManager: CoreDataManager = CoreDataManager.shared) {
         self.coreDataManager = coreDataManager
         loadStatisticsData()
+    }
+    
+    deinit {
+        cancellables.removeAll()
     }
     
     func loadStatisticsData() {
@@ -93,6 +103,9 @@ class StatisticsViewModel: ObservableObject {
             
             let winRate = records.isEmpty ? 0 : Double(wins) / Double(records.count) * 100
             
+            // 追加の統計データを計算
+            self.calculateAdditionalStats(from: records)
+            
             DispatchQueue.main.async {
                 self.totalStats = StatsSummary(
                     totalBet: totalBet,
@@ -112,7 +125,91 @@ class StatisticsViewModel: ObservableObject {
         }
     }
     
-    // 実際のデータからチャートデータを生成する新しいメソッド
+    // 追加の統計を計算
+    private func calculateAdditionalStats(from records: [NSManagedObject]) {
+        // 平均ベット金額
+        let totalBet = records.reduce(Decimal(0)) { result, record in
+            let betAmount = (record.value(forKey: "betAmount") as? NSDecimalNumber)?.decimalValue ?? Decimal(0)
+            return result + betAmount
+        }
+        
+        if !records.isEmpty {
+            averageBetAmount = totalBet / Decimal(records.count)
+        } else {
+            averageBetAmount = 0
+        }
+        
+        // 最大勝ち額
+        var maxWin: Decimal = 0
+        // 最大負け額（正の値で保存）
+        var maxLoss: Decimal = 0
+        
+        for record in records {
+            let betAmount = (record.value(forKey: "betAmount") as? NSDecimalNumber)?.decimalValue ?? Decimal(0)
+            let returnAmount = (record.value(forKey: "returnAmount") as? NSDecimalNumber)?.decimalValue ?? Decimal(0)
+            let profit = returnAmount - betAmount
+            
+            if profit > 0 && profit > maxWin {
+                maxWin = profit
+            } else if profit < 0 && abs(profit) > maxLoss {
+                maxLoss = abs(profit)
+            }
+        }
+        
+        maxWinAmount = maxWin
+        maxLossAmount = maxLoss
+        
+        // 連勝記録
+        calculateWinStreak(from: records)
+    }
+    
+    // 連勝記録の計算
+    private func calculateWinStreak(from records: [NSManagedObject]) {
+        // 日付でソート
+        let sortedRecords = records.sorted {
+            let date1 = $0.value(forKey: "date") as? Date ?? Date()
+            let date2 = $1.value(forKey: "date") as? Date ?? Date()
+            return date1 > date2
+        }
+        
+        var currentStreak = 0
+        var maxStreak = 0
+        
+        for record in sortedRecords {
+            let isWin = record.value(forKey: "isWin") as? Bool ?? false
+            
+            if isWin {
+                currentStreak += 1
+                maxStreak = max(maxStreak, currentStreak)
+            } else {
+                currentStreak = 0
+            }
+        }
+        
+        // 現在進行中の連勝も考慮
+        let currentWinStreak = calculateCurrentWinStreak(from: sortedRecords)
+        
+        maxWinStreak = max(maxStreak, currentWinStreak)
+    }
+    
+    // 現在進行中の連勝
+    private func calculateCurrentWinStreak(from sortedRecords: [NSManagedObject]) -> Int {
+        var streak = 0
+        
+        for record in sortedRecords {
+            let isWin = record.value(forKey: "isWin") as? Bool ?? false
+            
+            if isWin {
+                streak += 1
+            } else {
+                break
+            }
+        }
+        
+        return streak
+    }
+    
+    // 実際のデータからチャートデータを生成する
     private func generateChartData(from records: [NSManagedObject]) {
         // レコードを日付でグループ化
         let calendar = Calendar.current
@@ -153,15 +250,15 @@ class StatisticsViewModel: ObservableObject {
         let sortedDates = dailyProfits.keys.sorted()
         
         // チャートデータを生成
-        var profitData: [ChartDataPoint] = []
-        var roiData: [ChartDataPoint] = []
+        var profitData: [ChartPointData] = []
+        var roiData: [ChartPointData] = []
         
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MM/dd"
         
         for date in sortedDates {
             if let profit = dailyProfits[date] {
-                profitData.append(ChartDataPoint(
+                profitData.append(ChartPointData(
                     date: date,
                     value: NSDecimalNumber(decimal: profit).doubleValue,
                     label: dateFormatter.string(from: date)
@@ -169,7 +266,7 @@ class StatisticsViewModel: ObservableObject {
             }
             
             if let roi = dailyROIs[date] {
-                roiData.append(ChartDataPoint(
+                roiData.append(ChartPointData(
                     date: date,
                     value: NSDecimalNumber(decimal: roi).doubleValue,
                     label: dateFormatter.string(from: date)
@@ -184,13 +281,57 @@ class StatisticsViewModel: ObservableObject {
     }
     
     private func fetchGambleTypeStats(startDate: Date, endDate: Date) {
-        // 実際のデータをロードするコードを実装（サンプルデータは削除）
-        // ここでは簡略化してますが、実際にはギャンブル種別ごとの統計を計算するコードを実装
+        // ギャンブル種別ごとの統計情報を取得するコード
+        // 実際のデータベースからデータを取得する実装へ変更
     }
     
     private func fetchDailyStats(startDate: Date, endDate: Date) {
-        // 実際のデータをロードするコードを実装（サンプルデータは削除）
-        // 日別統計を計算するコードを実装
+        // 日別統計を取得するコード
+        // 実際のデータベースからデータを取得する実装へ変更
+    }
+    
+    // StatCardData配列を生成するメソッド
+    func generateAdditionalStats() -> [StatCardData] {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencySymbol = "¥"
+        formatter.currencyCode = "JPY"
+        
+        // 平均ベット金額
+        let formattedAverage = formatter.string(from: NSDecimalNumber(decimal: averageBetAmount)) ?? "¥0"
+        
+        // 最大勝ち金額
+        let formattedMaxWin = formatter.string(from: NSDecimalNumber(decimal: maxWinAmount)) ?? "¥0"
+        
+        // 最大負け金額
+        let formattedMaxLoss = formatter.string(from: NSDecimalNumber(decimal: maxLossAmount)) ?? "¥0"
+        
+        return [
+            StatCardData(
+                title: "平均ベット金額",
+                value: formattedAverage,
+                icon: "banknote",
+                color: .primaryColor
+            ),
+            StatCardData(
+                title: "最大勝ち金額",
+                value: formattedMaxWin,
+                icon: "arrow.up.forward",
+                color: .accentSuccess
+            ),
+            StatCardData(
+                title: "最大負け金額",
+                value: formattedMaxLoss,
+                icon: "arrow.down.forward",
+                color: .accentDanger
+            ),
+            StatCardData(
+                title: "連勝記録",
+                value: "\(maxWinStreak)回",
+                icon: "flame",
+                color: .gambleHorse
+            )
+        ]
     }
 }
 

@@ -3,10 +3,12 @@ import SwiftUI
 
 struct Constants {
     struct GambleTypes {
-        // 競馬
+        // 競馬 - horseshoeを別のアイコンに変更
         static let horse = GambleTypeDefinition(
             name: "競馬",
-            icon: "sportscourt", // より確実に表示されるアイコン
+            icon: "figure.equestrian", // iOS 16以降で使用可能なアイコン
+            // アイコンがない場合の代替
+            // icon: "crown.fill", // より一般的なアイコン
             color: "#00ACC1"
         )
         
@@ -46,7 +48,6 @@ struct Constants {
         )
     }
     
-    // 以下は変更なし
     struct Budget {
         static let defaultMonthlyAmount: Decimal = 30000
         static let defaultWarningThreshold: Int = 60 // 予算の60%で警告

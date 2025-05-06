@@ -13,6 +13,20 @@ class AppState: ObservableObject {
     @Published var isDarkMode: Bool = false
     @Published var useSystemTheme: Bool = true
     
+    private let coreDataManager: CoreDataManager
+    private var cancellables = Set<AnyCancellable>()
+    
+    init(coreDataManager: CoreDataManager = CoreDataManager.shared) {
+        self.coreDataManager = coreDataManager
+        
+        // アプリ設定の復元
+        restoreAppSettings()
+    }
+    
+    deinit {
+        cancellables.removeAll()
+    }
+    
     func showAlertMessage(_ message: String) {
         alertMessage = message
         showAlert = true
@@ -23,39 +37,42 @@ class AppState: ObservableObject {
         ErrorHandler.shared.handle(error)
     }
     
+    // アプリ設定の保存
+    private func restoreAppSettings() {
+        if let isDarkMode = UserDefaults.standard.object(forKey: "isDarkMode") as? Bool {
+            self.isDarkMode = isDarkMode
+        }
+        
+        if let useSystemTheme = UserDefaults.standard.object(forKey: "useSystemTheme") as? Bool {
+            self.useSystemTheme = useSystemTheme
+        }
+    }
+    
+    // ダークモード設定の保存
+    func saveThemeSettings() {
+        UserDefaults.standard.set(isDarkMode, forKey: "isDarkMode")
+        UserDefaults.standard.set(useSystemTheme, forKey: "useSystemTheme")
+    }
+    
     // ギャンブル種別をデータベースに保存
     private func saveGambleTypeToDatabase(_ type: GambleTypeModel) {
-        let context = PersistenceController.shared.container.viewContext
+        // Colorを文字列に変換
+        let colorHex = type.color.toHex() ?? "#000000"
         
-        // エンティティの作成
-        let newType = NSEntityDescription.insertNewObject(forEntityName: "GambleType", into: context)
-        
-        // 値の設定
-        newType.setValue(type.id, forKey: "id")
-        newType.setValue(type.name, forKey: "name")
-        newType.setValue(type.icon, forKey: "icon")
-        
-        // ColorをHEX文字列に変換する処理が必要
-        let colorHex = "#" + String(describing: type.color).replacingOccurrences(of: "Color(", with: "").replacingOccurrences(of: ")", with: "")
-        newType.setValue(colorHex, forKey: "color")
-        
-        newType.setValue(Date(), forKey: "createdAt")
-        newType.setValue(Date(), forKey: "updatedAt")
-        
-        // 保存
-        do {
-            try context.save()
-        } catch {
-            // エラーハンドリング
-            print("Failed to save gamble type: \(error)")
-            showAlertMessage("ギャンブル種別の保存に失敗しました")
+        coreDataManager.saveGambleType(
+            id: type.id,
+            name: type.name,
+            icon: type.icon,
+            color: colorHex
+        ) { [weak self] success in
+            if !success {
+                self?.showAlertMessage("ギャンブル種別の保存に失敗しました")
+            }
         }
     }
     
     // 既存のloadGambleTypesメソッドを修正
     func loadGambleTypes() {
-        let coreDataManager = CoreDataManager.shared
-        
         coreDataManager.fetchGambleTypes { [weak self] results in
             guard let self = self else { return }
             
@@ -81,5 +98,22 @@ class AppState: ObservableObject {
                 self.gambleTypes = loadedTypes
             }
         }
+    }
+}
+
+// Color型のHEX文字列変換拡張
+extension Color {
+    func toHex() -> String? {
+        guard let components = UIColor(self).cgColor.components else { return nil }
+        
+        let r = components[0]
+        let g = components[1]
+        let b = components[2]
+        
+        let hexString = String(format: "#%02X%02X%02X",
+                              Int(r * 255),
+                              Int(g * 255),
+                              Int(b * 255))
+        return hexString
     }
 }

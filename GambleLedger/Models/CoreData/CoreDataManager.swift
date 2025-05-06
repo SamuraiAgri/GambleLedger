@@ -10,11 +10,18 @@ class CoreDataManager {
         return persistenceController.container.viewContext
     }
     
+    // バックグラウンド処理用のコンテキスト作成
+    private func createBackgroundContext() -> NSManagedObjectContext {
+        let context = persistenceController.container.newBackgroundContext()
+        context.automaticallyMergesChangesFromParent = true
+        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        return context
+    }
+    
     // データ取得の新たな処理を追加
     private func executeAsyncFetch<T>(_ request: NSFetchRequest<T>, completion: @escaping ([T]) -> Void) where T: NSFetchRequestResult {
         // バックグラウンドコンテキストを作成して処理を実行
-        let context = persistenceController.container.newBackgroundContext()
-        context.automaticallyMergesChangesFromParent = true
+        let context = createBackgroundContext()
         
         context.perform {
             do {
@@ -115,24 +122,24 @@ class CoreDataManager {
         completion: @escaping (Bool) -> Void
     ) {
         // バックグラウンドコンテキストで保存処理を実行
-        let context = persistenceController.container.newBackgroundContext()
+        let context = createBackgroundContext()
         
         context.perform {
-            let newRecord = NSEntityDescription.insertNewObject(forEntityName: "BetRecord", into: context)
-            
-            newRecord.setValue(UUID(), forKey: "id")
-            newRecord.setValue(date, forKey: "date")
-            newRecord.setValue(gambleTypeID, forKey: "gambleTypeID")
-            newRecord.setValue(eventName, forKey: "eventName")
-            newRecord.setValue(bettingSystem, forKey: "bettingSystem")
-            newRecord.setValue(NSDecimalNumber(decimal: betAmount), forKey: "betAmount")
-            newRecord.setValue(NSDecimalNumber(decimal: returnAmount), forKey: "returnAmount")
-            newRecord.setValue(memo, forKey: "memo")
-            newRecord.setValue(returnAmount > betAmount, forKey: "isWin")
-            newRecord.setValue(Date(), forKey: "createdAt")
-            newRecord.setValue(Date(), forKey: "updatedAt")
-            
             do {
+                let newRecord = NSEntityDescription.insertNewObject(forEntityName: "BetRecord", into: context)
+                
+                newRecord.setValue(UUID(), forKey: "id")
+                newRecord.setValue(date, forKey: "date")
+                newRecord.setValue(gambleTypeID, forKey: "gambleTypeID")
+                newRecord.setValue(eventName, forKey: "eventName")
+                newRecord.setValue(bettingSystem, forKey: "bettingSystem")
+                newRecord.setValue(NSDecimalNumber(decimal: betAmount), forKey: "betAmount")
+                newRecord.setValue(NSDecimalNumber(decimal: returnAmount), forKey: "returnAmount")
+                newRecord.setValue(memo, forKey: "memo")
+                newRecord.setValue(returnAmount > betAmount, forKey: "isWin")
+                newRecord.setValue(Date(), forKey: "createdAt")
+                newRecord.setValue(Date(), forKey: "updatedAt")
+                
                 try context.save()
                 
                 // メインスレッドでコールバック実行
@@ -141,6 +148,9 @@ class CoreDataManager {
                 }
             } catch {
                 print("Failed to save bet record: \(error)")
+                
+                // エラー時にロールバック
+                context.rollback()
                 
                 // メインスレッドでコールバック実行
                 DispatchQueue.main.async {
@@ -153,7 +163,7 @@ class CoreDataManager {
     // ベット記録の削除メソッド
     func deleteBetRecord(id: UUID, completion: @escaping (Bool) -> Void) {
         // バックグラウンドコンテキストで削除処理を実行
-        let context = persistenceController.container.newBackgroundContext()
+        let context = createBackgroundContext()
         let request = NSFetchRequest<NSManagedObject>(entityName: "BetRecord")
         request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
         
@@ -174,6 +184,134 @@ class CoreDataManager {
                 }
             } catch {
                 print("Delete error: \(error)")
+                
+                // エラー時にロールバック
+                context.rollback()
+                
+                DispatchQueue.main.async {
+                    completion(false)
+                }
+            }
+        }
+    }
+    
+    // MARK: - 予算の保存
+    
+    func saveBudget(
+        id: UUID = UUID(),
+        amount: Decimal,
+        startDate: Date,
+        endDate: Date,
+        notifyThreshold: Int,
+        gambleTypeID: UUID? = nil,
+        completion: @escaping (Bool) -> Void
+    ) {
+        let context = createBackgroundContext()
+        
+        context.perform {
+            do {
+                // 既存の予算をチェック（期間が重複する場合は更新）
+                let existingBudgetRequest = NSFetchRequest<NSManagedObject>(entityName: "Budget")
+                
+                var predicates: [NSPredicate] = [
+                    NSPredicate(format: "(startDate <= %@ AND endDate >= %@) OR (startDate <= %@ AND endDate >= %@)",
+                               endDate as NSDate, startDate as NSDate,
+                               startDate as NSDate, startDate as NSDate)
+                ]
+                
+                if let gambleTypeID = gambleTypeID {
+                    predicates.append(NSPredicate(format: "gambleTypeID == %@", gambleTypeID as CVarArg))
+                } else {
+                    predicates.append(NSPredicate(format: "gambleTypeID == nil"))
+                }
+                
+                existingBudgetRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+                
+                let existingBudgets = try context.fetch(existingBudgetRequest)
+                
+                // 既存予算の削除（同期間の予算を更新するため）
+                for existingBudget in existingBudgets {
+                    context.delete(existingBudget)
+                }
+                
+                // 新規予算の作成
+                let budgetObject = NSEntityDescription.insertNewObject(forEntityName: "Budget", into: context)
+                budgetObject.setValue(id, forKey: "id")
+                budgetObject.setValue(NSDecimalNumber(decimal: amount), forKey: "amount")
+                budgetObject.setValue(startDate, forKey: "startDate")
+                budgetObject.setValue(endDate, forKey: "endDate")
+                budgetObject.setValue(notifyThreshold, forKey: "notifyThreshold")
+                budgetObject.setValue(gambleTypeID, forKey: "gambleTypeID")
+                budgetObject.setValue(Date(), forKey: "createdAt")
+                budgetObject.setValue(Date(), forKey: "updatedAt")
+                
+                // デバッグ出力
+                print("保存する予算: 期間[\(startDate) - \(endDate)], 金額: \(amount)")
+                
+                // 保存を試行
+                try context.save()
+                print("予算の保存に成功しました")
+                
+                DispatchQueue.main.async {
+                    completion(true)
+                }
+            } catch {
+                print("予算の保存に失敗しました: \(error)")
+                context.rollback()
+                
+                DispatchQueue.main.async {
+                    completion(false)
+                }
+            }
+        }
+    }
+    
+    // MARK: - ギャンブル種別の保存
+    
+    func saveGambleType(
+        id: UUID,
+        name: String,
+        icon: String,
+        color: String,
+        completion: @escaping (Bool) -> Void
+    ) {
+        let context = createBackgroundContext()
+        
+        context.perform {
+            do {
+                // 既存の種別をチェック
+                let request = NSFetchRequest<NSManagedObject>(entityName: "GambleType")
+                request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+                let existingTypes = try context.fetch(request)
+                
+                let gambleType: NSManagedObject
+                
+                if let existingType = existingTypes.first {
+                    // 既存の種別を更新
+                    gambleType = existingType
+                } else {
+                    // 新規作成
+                    gambleType = NSEntityDescription.insertNewObject(forEntityName: "GambleType", into: context)
+                    gambleType.setValue(id, forKey: "id")
+                    gambleType.setValue(Date(), forKey: "createdAt")
+                }
+                
+                // 値を設定
+                gambleType.setValue(name, forKey: "name")
+                gambleType.setValue(icon, forKey: "icon")
+                gambleType.setValue(color, forKey: "color")
+                gambleType.setValue(Date(), forKey: "updatedAt")
+                
+                try context.save()
+                
+                DispatchQueue.main.async {
+                    completion(true)
+                }
+            } catch {
+                print("Failed to save gamble type: \(error)")
+                
+                // エラー時にロールバック
+                context.rollback()
                 
                 DispatchQueue.main.async {
                     completion(false)

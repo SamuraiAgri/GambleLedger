@@ -34,6 +34,20 @@ enum AppError: Error, Identifiable {
         case .generalError: return "エラー"
         }
     }
+    
+    static func fromError(_ error: Error) -> AppError {
+        if let appError = error as? AppError {
+            return appError
+        }
+        
+        // CoreDataエラーの場合
+        if let nsError = error as NSError?, nsError.domain == NSCocoaErrorDomain {
+            return .coreDataError(nsError.localizedDescription)
+        }
+        
+        // その他のエラー
+        return .generalError(error.localizedDescription)
+    }
 }
 
 class ErrorHandler: ObservableObject {
@@ -47,6 +61,19 @@ class ErrorHandler: ObservableObject {
             self.currentError = error
             self.showingError = true
         }
+    }
+    
+    func handleError(_ error: Error) {
+        handle(AppError.fromError(error))
+    }
+    
+    func handleCoreDataError(_ error: Error, customMessage: String? = nil) {
+        let message = customMessage ?? error.localizedDescription
+        handle(.coreDataError(message))
+    }
+    
+    func handleValidationError(_ message: String) {
+        handle(.validationError(message))
     }
     
     func dismiss() {

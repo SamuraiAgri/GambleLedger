@@ -19,6 +19,7 @@ class BudgetViewModel: ObservableObject {
     
     // 状態管理
     @Published var isLoading: Bool = false
+    @Published var isSaving: Bool = false
     @Published var showSuccessMessage: Bool = false
     @Published var errorMessage: String?
     @Published var showError: Bool = false
@@ -29,12 +30,65 @@ class BudgetViewModel: ObservableObject {
     
     init(coreDataManager: CoreDataManager = CoreDataManager.shared) {
         self.coreDataManager = coreDataManager
+        setupBindings()
         
         // ギャンブル種別のロード
         loadGambleTypes()
         
         // 予算データのロード
         loadBudgetData()
+    }
+    
+    deinit {
+        cancellables.removeAll()
+    }
+    
+    // バインディングの設定
+    private func setupBindings() {
+        // 金額入力のフォーマット処理
+        $budgetAmount
+            .dropFirst()
+            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+            .sink { [weak self] value in
+                self?.formatAmountInput(value: value) { formatted in
+                    if formatted != value {
+                        self?.budgetAmount = formatted
+                    }
+                }
+            }
+            .store(in: &cancellables)
+    }
+    
+    // 金額入力のフォーマット
+    private func formatAmountInput(value: String, completion: @escaping (String) -> Void) {
+        // すでにカンマが含まれている場合はスキップ
+        if value.contains(",") && !value.hasSuffix(",") {
+            return
+        }
+        
+        // 数字以外を除去
+        let numbersOnly = value.filter { "0123456789".contains($0) }
+        
+        // 空なら空文字を返す
+        if numbersOnly.isEmpty {
+            completion("")
+            return
+        }
+        
+        // 数値を整形
+        if let intValue = Int(numbersOnly) {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            formatter.groupingSeparator = ","
+            
+            if let formattedString = formatter.string(from: NSNumber(value: intValue)) {
+                completion(formattedString)
+            } else {
+                completion(numbersOnly)
+            }
+        } else {
+            completion(numbersOnly)
+        }
     }
     
     // ギャンブル種別のロード
@@ -93,7 +147,16 @@ class BudgetViewModel: ObservableObject {
                     self.isLoading = false
                     
                     // 未設定の場合は予算入力欄にデフォルト値をセット
-                    self.budgetAmount = String(describing: Constants.Budget.defaultMonthlyAmount)
+                    if self.budgetAmount.isEmpty {
+                        let formatter = NumberFormatter()
+                        formatter.numberStyle = .decimal
+                        formatter.groupingSeparator = ","
+                        if let formattedString = formatter.string(from: NSDecimalNumber(decimal: Constants.Budget.defaultMonthlyAmount)) {
+                            self.budgetAmount = formattedString
+                        } else {
+                            self.budgetAmount = "\(Constants.Budget.defaultMonthlyAmount)"
+                        }
+                    }
                 }
             }
         }
@@ -119,62 +182,89 @@ class BudgetViewModel: ObservableObject {
         }
     }
 
-    // saveBudget メソッド内の変更点：
     func saveBudget() {
         guard validateInput() else { return }
         
         isLoading = true
+        isSaving = true
         
-        guard let amountDecimal = Decimal(string: budgetAmount.replacingOccurrences(of: ",", with: "")) else {
-            showError(message: "入力金額の変換に失敗しました。")
+        // カンマを除去して処理
+        let amountText = budgetAmount.replacingOccurrences(of: ",", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard let amountDecimal = Decimal(string: amountText) else {
+            self.displayError(message: "入力金額の変換に失敗しました。")
             return
         }
         
-        // 予算データの作成（未使用変数を修正）
-        _ = BudgetModel(
-            id: UUID(),
+        // 予算データの作成
+        let budgetID = UUID()
+        
+        print("予算保存開始: \(amountDecimal)円, 期間[\(selectedStartDate) - \(selectedEndDate)]")
+        
+        coreDataManager.saveBudget(
+            id: budgetID,
             amount: amountDecimal,
             startDate: selectedStartDate,
             endDate: selectedEndDate,
             notifyThreshold: notifyThreshold,
-            gambleTypeID: selectedGambleTypeID,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
-        
-        // TODO: CoreDataに保存する処理を実装
-        
-        DispatchQueue.main.async {
-            self.isLoading = false
-            self.showSuccessMessage = true
+            gambleTypeID: selectedGambleTypeID
+        ) { [weak self] success in
+            guard let self = self else { return }
             
-            // 成功メッセージを3秒後に非表示
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                self.showSuccessMessage = false
+            DispatchQueue.main.async {
+                self.isLoading = false
+                self.isSaving = false
+                
+                if success {
+                    print("予算保存成功")
+                    self.showSuccessMessage = true
+                    self.generateHapticFeedback()
+                    
+                    // 成功メッセージを3秒後に非表示
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        self.showSuccessMessage = false
+                    }
+                    
+                    // データを再読み込み
+                    self.loadBudgetData()
+                } else {
+                    print("予算保存失敗")
+                    self.displayError(message: "予算の保存に失敗しました。もう一度お試しください。")
+                }
             }
-            
-            // データを再読み込み
-            self.loadBudgetData()
         }
+    }
+    
+    // 触覚フィードバック
+    private func generateHapticFeedback() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
     }
     
     // 入力検証
     private func validateInput() -> Bool {
         // 金額の入力チェック
         if budgetAmount.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            showError(message: "予算金額を入力してください。")
+            displayError(message: "予算金額を入力してください。")
             return false
         }
         
         // 数値変換チェック
-        if Decimal(string: budgetAmount.replacingOccurrences(of: ",", with: "")) == nil {
-            showError(message: "有効な金額を入力してください。")
+        let amountText = budgetAmount.replacingOccurrences(of: ",", with: "")
+        if Decimal(string: amountText) == nil {
+            displayError(message: "有効な金額を入力してください。")
+            return false
+        }
+        
+        // 金額範囲チェック
+        if let amount = Decimal(string: amountText), amount <= 0 || amount > 10000000 {
+            displayError(message: "予算金額は1〜10,000,000円の範囲で入力してください。")
             return false
         }
         
         // 日付範囲チェック
         if selectedEndDate < selectedStartDate {
-            showError(message: "終了日は開始日以降に設定してください。")
+            displayError(message: "終了日は開始日以降に設定してください。")
             return false
         }
         
@@ -182,9 +272,26 @@ class BudgetViewModel: ObservableObject {
     }
     
     // エラー表示
-    private func showError(message: String) {
+    private func displayError(message: String) {
         errorMessage = message
         showError = true
         isLoading = false
+        isSaving = false
+    }
+    
+    // 予算期間を今月にセット
+    func setCurrentMonth() {
+        let today = Date()
+        selectedStartDate = today.startOfMonth()
+        selectedEndDate = today.endOfMonth()
+    }
+    
+    // 予算期間を来月にセット
+    func setNextMonth() {
+        let calendar = Calendar.current
+        if let nextMonth = calendar.date(byAdding: .month, value: 1, to: Date()) {
+            selectedStartDate = nextMonth.startOfMonth()
+            selectedEndDate = nextMonth.endOfMonth()
+        }
     }
 }

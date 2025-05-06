@@ -54,31 +54,13 @@ struct BudgetView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showingAddBudgetSheet) {
+            .sheet(isPresented: $showingAddBudgetSheet, onDismiss: {
+                // シートが閉じられた時にデータを再読み込み
+                viewModel.loadBudgetData()
+            }) {
                 AddBudgetSheetView(viewModel: viewModel)
             }
-            .overlay(
-                viewModel.isLoading ?
-                    ZStack {
-                        Color.black.opacity(0.2)
-                            .edgesIgnoringSafeArea(.all)
-                        
-                        VStack(spacing: 12) {
-                            ProgressView()
-                                .scaleEffect(1.5)
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            
-                            Text("読み込み中...")
-                                .foregroundColor(.white)
-                                .font(.caption)
-                                .padding(.top, 4)
-                        }
-                        .padding(24)
-                        .background(Color.gray.opacity(0.8))
-                        .cornerRadius(12)
-                    }
-                    : nil
-            )
+            .loadingOverlay(isLoading: viewModel.isLoading && !viewModel.isSaving)
         }
         .withErrorHandling()
     }
@@ -179,7 +161,9 @@ struct BudgetUsageCard: View {
     }
     
     private var percentageUsed: Double {
-        Double(truncating: (usedAmount / totalAmount * 100) as NSNumber)
+        guard totalAmount > 0 else { return 0 }
+        let result = Double(truncating: (usedAmount / totalAmount * 100) as NSNumber)
+        return min(max(result, 0), 100) // 0〜100の範囲に収める
     }
     
     var body: some View {
@@ -453,6 +437,9 @@ struct AddBudgetSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: BudgetViewModel
     
+    // キーボード管理
+    @FocusState private var focusedField: Bool
+    
     var body: some View {
         NavigationView {
             Form {
@@ -468,6 +455,7 @@ struct AddBudgetSheetView: View {
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                             .foregroundColor(.primary)
+                            .focused($focusedField)
                         
                         Text("円")
                             .foregroundColor(.gray)
@@ -478,29 +466,30 @@ struct AddBudgetSheetView: View {
                 Section(header: Text("期間")) {
                     DatePicker("開始日", selection: $viewModel.selectedStartDate, displayedComponents: .date)
                         .accentColor(.primaryColor)
+                        .onChange(of: viewModel.selectedStartDate) { _, _ in
+                            focusedField = false
+                        }
                     
                     DatePicker("終了日", selection: $viewModel.selectedEndDate, displayedComponents: .date)
                         .accentColor(.primaryColor)
+                        .onChange(of: viewModel.selectedEndDate) { _, _ in
+                            focusedField = false
+                        }
                     
                     // クイック期間選択
                     HStack {
                         Spacer()
                         
                         Button("今月") {
-                            let today = Date()
-                            viewModel.selectedStartDate = today.startOfMonth()
-                            viewModel.selectedEndDate = today.endOfMonth()
+                            viewModel.setCurrentMonth()
+                            focusedField = false
                         }
                         .buttonStyle(.bordered)
                         .tint(.primaryColor)
                         
                         Button("翌月") {
-                            let today = Date()
-                            let calendar = Calendar.current
-                            if let nextMonth = calendar.date(byAdding: .month, value: 1, to: today) {
-                                viewModel.selectedStartDate = nextMonth.startOfMonth()
-                                viewModel.selectedEndDate = nextMonth.endOfMonth()
-                            }
+                            viewModel.setNextMonth()
+                            focusedField = false
                         }
                         .buttonStyle(.bordered)
                         .tint(.secondaryColor)
@@ -539,22 +528,20 @@ struct AddBudgetSheetView: View {
                         }
                     }
                     .pickerStyle(.menu)
+                    .onChange(of: viewModel.selectedGambleTypeID) { _, _ in
+                        focusedField = false
+                    }
                 }
                 
                 // 保存ボタン
                 Section {
                     Button(action: {
-                        // タイマーを使用して、保存アクションを少し遅らせ、UIをブロックしないようにする
-                        viewModel.isLoading = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            viewModel.saveBudget()
-                            viewModel.isLoading = false
-                            dismiss()
-                        }
+                        focusedField = false
+                        viewModel.saveBudget()
                     }) {
                         HStack {
                             Spacer()
-                            if viewModel.isLoading {
+                            if viewModel.isSaving {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             } else {
@@ -564,12 +551,29 @@ struct AddBudgetSheetView: View {
                             Spacer()
                         }
                     }
-                    .disabled(viewModel.isLoading)
+                    .disabled(viewModel.isSaving)
                     .listRowBackground(Color.primaryColor)
                     .foregroundColor(.white)
                 }
             }
             .navigationTitle("予算設定")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("キャンセル") {
+                        dismiss()
+                    }
+                }
+                
+                ToolbarItem(placement: .keyboard) {
+                    HStack {
+                        Spacer()
+                        
+                        Button("完了") {
+                            focusedField = false
+                        }
+                    }
+                }
+            }
             .alert(isPresented: $viewModel.showError) {
                 Alert(
                     title: Text("エラー"),
@@ -577,6 +581,22 @@ struct AddBudgetSheetView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
+            .overlay(
+                viewModel.showSuccessMessage ?
+                    VStack {
+                        Spacer()
+                        Text("予算を設定しました！")
+                            .padding()
+                            .background(Color.accentSuccess)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                            .shadow(radius: 3)
+                            .padding(.bottom, 16)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                            .animation(.spring(), value: viewModel.showSuccessMessage)
+                    }
+                    : nil
+            )
         }
     }
 }

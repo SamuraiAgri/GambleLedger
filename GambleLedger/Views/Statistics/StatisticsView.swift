@@ -1,4 +1,4 @@
-// StatisticsView.swift
+// GambleLedger/Views/Statistics/StatisticsView.swift
 import SwiftUI
 import Charts
 
@@ -25,8 +25,8 @@ struct StatisticsView: View {
                             .padding(.horizontal)
                     }
                     
-                    // 統計数値カード
-                    StatsMetricsGrid()
+                    // 統計数値カード - 実際のデータを使用
+                    StatsMetricsGrid(stats: viewModel.generateAdditionalStats())
                         .padding(.horizontal)
                 }
                 .padding(.vertical)
@@ -37,6 +37,7 @@ struct StatisticsView: View {
                 viewModel.loadStatisticsData()
             }
         }
+        .withErrorHandling()
     }
     
     // 期間選択部分を分割
@@ -279,32 +280,8 @@ struct StatsMetricsGrid: View {
     let columns = Array(repeating: GridItem(.flexible(), spacing: 16), count: 2)
     let stats: [StatCardData]
     
-    init(stats: [StatCardData] = [
-        StatCardData(
-            title: "平均ベット金額",
-            value: "¥3,240",
-            icon: "banknote",
-            color: .primaryColor
-        ),
-        StatCardData(
-            title: "最大勝ち金額",
-            value: "¥32,500",
-            icon: "arrow.up.forward",
-            color: .accentSuccess
-        ),
-        StatCardData(
-            title: "最大負け金額",
-            value: "¥12,800",
-            icon: "arrow.down.forward",
-            color: .accentDanger
-        ),
-        StatCardData(
-            title: "連勝記録",
-            value: "6回",
-            icon: "flame",
-            color: .gambleHorse
-        )
-    ]) {
+    // ハードコードされたデータを削除
+    init(stats: [StatCardData]) {
         self.stats = stats
     }
     

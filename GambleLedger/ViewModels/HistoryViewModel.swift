@@ -16,6 +16,7 @@ class HistoryViewModel: ObservableObject {
     
     // 状態管理
     @Published var isLoading: Bool = false
+    @Published var isDeleting: Bool = false
     @Published var sortOption: SortOption = .dateDesc
     @Published var gambleTypes: [GambleTypeModel] = []
     @Published var errorMessage: String? = nil
@@ -49,6 +50,32 @@ class HistoryViewModel: ObservableObject {
         setupObservers()
     }
     
+    deinit {
+        cancellables.removeAll()
+    }
+    
+    // バインディングの設定
+    private func setupObservers() {
+        // 検索テキスト、日付範囲、ギャンブル種別、ソートオプションの変更を監視
+        Publishers.CombineLatest4(
+            $searchText,
+            $sortOption,
+            $filterStartDate,
+            $filterEndDate
+        )
+        .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+        .sink { [weak self] _, _, _, _ in
+            self?.applyFiltersAndSort()
+        }
+        .store(in: &cancellables)
+        
+        $selectedGambleTypeID
+            .sink { [weak self] _ in
+                self?.applyFiltersAndSort()
+            }
+            .store(in: &cancellables)
+    }
+    
     // ギャンブル種別のロード
     private func loadGambleTypes() {
         coreDataManager.fetchGambleTypes { [weak self] results in
@@ -66,7 +93,10 @@ class HistoryViewModel: ObservableObject {
     func loadBetRecords() {
         isLoading = true
         
-        coreDataManager.fetchBetRecords(startDate: filterStartDate, endDate: filterEndDate, gambleTypeID: selectedGambleTypeID) { [weak self] records in
+        // 終了日は日付の最後（23:59:59）を使用
+        let endOfDay = Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: filterEndDate) ?? filterEndDate
+        
+        coreDataManager.fetchBetRecords(startDate: filterStartDate, endDate: endOfDay, gambleTypeID: selectedGambleTypeID) { [weak self] records in
             guard let self = self else { return }
             
             var displayModels: [BetDisplayModel] = []
@@ -90,28 +120,6 @@ class HistoryViewModel: ObservableObject {
         }
     }
     
-    // フィルタとソートの監視
-    private func setupObservers() {
-        // 検索テキスト、日付範囲、ギャンブル種別、ソートオプションの変更を監視
-        Publishers.CombineLatest4(
-            $searchText,
-            $sortOption,
-            $filterStartDate,
-            $filterEndDate
-        )
-        .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
-        .sink { [weak self] _, _, _, _ in
-            self?.applyFiltersAndSort()
-        }
-        .store(in: &cancellables)
-        
-        $selectedGambleTypeID
-            .sink { [weak self] _ in
-                self?.applyFiltersAndSort()
-            }
-            .store(in: &cancellables)
-    }
-    
     // フィルタとソートの適用
     private func applyFiltersAndSort() {
         // 検索テキストによるフィルタリング
@@ -125,7 +133,7 @@ class HistoryViewModel: ObservableObject {
             }
         }
         
-        // ギャンブル種別によるフィルタリング - ここを修正
+        // ギャンブル種別によるフィルタリング
         if let typeID = selectedGambleTypeID, let selectedType = gambleTypes.first(where: { $0.id == typeID }) {
             filtered = filtered.filter { record in
                 record.gambleType == selectedType.name
@@ -161,7 +169,7 @@ class HistoryViewModel: ObservableObject {
         }
     }
     
-    // ベット記録の削除 - エラーハンドリング追加
+    // ベット記録の削除
     func deleteBetRecord(id: String) {
         guard let uuid = UUID(uuidString: id) else {
             self.showError(message: "無効なIDです")
@@ -169,6 +177,7 @@ class HistoryViewModel: ObservableObject {
         }
         
         isLoading = true
+        isDeleting = true
         
         // CoreDataから削除する処理を実装
         coreDataManager.deleteBetRecord(id: uuid) { [weak self] success in
@@ -176,6 +185,7 @@ class HistoryViewModel: ObservableObject {
             
             DispatchQueue.main.async {
                 self.isLoading = false
+                self.isDeleting = false
                 
                 if success {
                     // UIから削除
@@ -186,9 +196,57 @@ class HistoryViewModel: ObservableObject {
                     if let index = self.betRecords.firstIndex(where: { $0.id == id }) {
                         self.betRecords.remove(at: index)
                     }
+                    
+                    self.provideHapticFeedback(type: .success)
                 } else {
                     self.showError(message: "削除中にエラーが発生しました")
                 }
+            }
+        }
+    }
+    
+    // 触覚フィードバック
+    private func provideHapticFeedback(type: UINotificationFeedbackGenerator.FeedbackType) {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(type)
+    }
+    
+    // 期間フィルタの設定
+    func setDateFilter(period: DateFilterPeriod) {
+        let calendar = Calendar.current
+        let today = Date()
+        
+        switch period {
+        case .today:
+            filterStartDate = calendar.startOfDay(for: today)
+            filterEndDate = today
+        case .yesterday:
+            if let yesterday = calendar.date(byAdding: .day, value: -1, to: today) {
+                filterStartDate = calendar.startOfDay(for: yesterday)
+                filterEndDate = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: yesterday) ?? yesterday
+            }
+        case .thisWeek:
+            if let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today)) {
+                filterStartDate = startOfWeek
+                filterEndDate = today
+            }
+        case .thisMonth:
+            filterStartDate = today.startOfMonth()
+            filterEndDate = today
+        case .lastMonth:
+            if let lastMonth = calendar.date(byAdding: .month, value: -1, to: today) {
+                filterStartDate = lastMonth.startOfMonth()
+                filterEndDate = lastMonth.endOfMonth()
+            }
+        case .threeMonths:
+            if let threeMonthsAgo = calendar.date(byAdding: .month, value: -3, to: today) {
+                filterStartDate = threeMonthsAgo
+                filterEndDate = today
+            }
+        case .allTime:
+            if let yearsAgo = calendar.date(byAdding: .year, value: -5, to: today) {
+                filterStartDate = yearsAgo
+                filterEndDate = today
             }
         }
     }
@@ -197,5 +255,16 @@ class HistoryViewModel: ObservableObject {
     private func showError(message: String) {
         errorMessage = message
         showError = true
+    }
+    
+    // 日付フィルタ期間
+    enum DateFilterPeriod {
+        case today
+        case yesterday
+        case thisWeek
+        case thisMonth
+        case lastMonth
+        case threeMonths
+        case allTime
     }
 }

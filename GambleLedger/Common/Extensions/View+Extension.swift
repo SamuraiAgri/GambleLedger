@@ -86,107 +86,149 @@ extension View {
                 Color.clear.onAppear {
                     completion(geometry.size)
                 }
-            }
-        )
-    }
-    
-    // 条件付きで修飾子を適用
-    @ViewBuilder
-    func `if`<Transform: View>(_ condition: Bool, transform: (Self) -> Transform) -> some View {
-        if condition {
-            transform(self)
-        } else {
-            self
-        }
-    }
-    
-    // タップ効果（少し押し込む感じ）
-    func pressableStyle() -> some View {
-        self.buttonStyle(PressableButtonStyle())
-    }
-    
-    // アニメーションエフェクト
-    func withBounceAnimation() -> some View {
-        self.modifier(BounceAnimationModifier())
-    }
-    
-    // エラーメッセージを表示
-    func withErrorMessage(_ message: String?, isShowing: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            self
-            
-            if isShowing, let errorText = message {
-                Text(errorText)
-                    .font(.caption)
-                    .foregroundColor(.accentDanger)
-                    .padding(.horizontal, 4)
-            }
-        }
-    }
-    
-    // キーボードが表示されたときにViewをスクロールで調整
-    func adaptToKeyboard() -> some View {
-        modifier(KeyboardAdaptiveModifier())
-    }
-    
-    // withErrorHandling メソッドはErrorHandler.swiftで定義されるため、
-    // ここでは削除して重複を避けます
-}
-
-// 押し込み効果のあるボタンスタイル
-struct PressableButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .opacity(configuration.isPressed ? 0.9 : 1)
-            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
-    }
-}
-
-// キーボード表示に応じて調整するモディファイア
-struct KeyboardAdaptiveModifier: ViewModifier {
-    @State private var keyboardHeight: CGFloat = 0
-    
-    func body(content: Content) -> some View {
-        content
-            .padding(.bottom, keyboardHeight)
-            .onAppear {
-                NotificationCenter.default.addObserver(
-                    forName: UIResponder.keyboardWillShowNotification,
-                    object: nil,
-                    queue: .main
-                ) { notification in
-                    guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else {
-                        return
+                            }
+                        )
                     }
                     
-                    keyboardHeight = keyboardFrame.height
+                    // 条件付きで修飾子を適用
+                    @ViewBuilder
+                    func `if`<Transform: View>(_ condition: Bool, transform: (Self) -> Transform) -> some View {
+                        if condition {
+                            transform(self)
+                        } else {
+                            self
+                        }
+                    }
+                    
+                    // タップ効果（少し押し込む感じ）
+                    func pressableStyle() -> some View {
+                        self.buttonStyle(PressableButtonStyle())
+                    }
+                    
+                    // アニメーションエフェクト
+                    func withBounceAnimation() -> some View {
+                        self.modifier(BounceAnimationModifier())
+                    }
+                    
+                    // エラーメッセージを表示
+                    func withErrorMessage(_ message: String?, isShowing: Bool) -> some View {
+                        VStack(alignment: .leading, spacing: 4) {
+                            self
+                            
+                            if isShowing, let errorText = message {
+                                Text(errorText)
+                                    .font(.caption)
+                                    .foregroundColor(.accentDanger)
+                                    .padding(.horizontal, 4)
+                            }
+                        }
+                    }
+                    
+                    // キーボードが表示されたときにViewをスクロールで調整
+                    func adaptToKeyboard() -> some View {
+                        modifier(KeyboardAdaptiveModifier())
+                    }
+                    
+                    // キーボードを閉じる
+                    func dismissKeyboard() -> some View {
+                        self.onTapGesture {
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        }
+                    }
                 }
-                
-                NotificationCenter.default.addObserver(
-                    forName: UIResponder.keyboardWillHideNotification,
-                    object: nil,
-                    queue: .main
-                ) { _ in
-                    keyboardHeight = 0
-                }
-            }
-    }
-}
 
-// バウンスアニメーション用モディファイア
-struct BounceAnimationModifier: ViewModifier {
-    @State private var animate = false
-    
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(animate ? 1.03 : 1)
-            .animation(animate ?
-                       Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true) :
-                        .default,
-                      value: animate)
-            .onAppear {
-                animate = true
-            }
-    }
-}
+                // 押し込み効果のあるボタンスタイル
+                struct PressableButtonStyle: ButtonStyle {
+                    func makeBody(configuration: Configuration) -> some View {
+                        configuration.label
+                            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+                            .opacity(configuration.isPressed ? 0.9 : 1)
+                            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
+                    }
+                }
+
+                // キーボード表示に応じて調整するモディファイア
+                struct KeyboardAdaptiveModifier: ViewModifier {
+                    @State private var keyboardHeight: CGFloat = 0
+                    
+                    func body(content: Content) -> some View {
+                        content
+                            .padding(.bottom, keyboardHeight)
+                            .onAppear {
+                                NotificationCenter.default.addObserver(
+                                    forName: UIResponder.keyboardWillShowNotification,
+                                    object: nil,
+                                    queue: .main
+                                ) { notification in
+                                    guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else {
+                                        return
+                                    }
+                                    
+                                    keyboardHeight = keyboardFrame.height
+                                }
+                                
+                                NotificationCenter.default.addObserver(
+                                    forName: UIResponder.keyboardWillHideNotification,
+                                    object: nil,
+                                    queue: .main
+                                ) { _ in
+                                    keyboardHeight = 0
+                                }
+                            }
+                    }
+                }
+
+                // バウンスアニメーション用モディファイア
+                struct BounceAnimationModifier: ViewModifier {
+                    @State private var animate = false
+                    
+                    func body(content: Content) -> some View {
+                        content
+                            .scaleEffect(animate ? 1.03 : 1)
+                            .animation(animate ?
+                                       Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true) :
+                                        .default,
+                                      value: animate)
+                            .onAppear {
+                                animate = true
+                            }
+                    }
+                }
+
+                // ローディングオーバーレイ（再利用可能コンポーネント）
+                struct LoadingOverlay: ViewModifier {
+                    let isLoading: Bool
+                    let message: String
+                    
+                    func body(content: Content) -> some View {
+                        ZStack {
+                            content
+                            
+                            if isLoading {
+                                Color.black.opacity(0.3)
+                                    .edgesIgnoringSafeArea(.all)
+                                
+                                VStack(spacing: 12) {
+                                    ProgressView()
+                                        .scaleEffect(1.5)
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    
+                                    Text(message)
+                                        .font(.callout)
+                                        .foregroundColor(.white)
+                                }
+                                .padding(20)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color.gray.opacity(0.8))
+                                )
+                            }
+                        }
+                    }
+                }
+
+                extension View {
+                    func loadingOverlay(isLoading: Bool, message: String = "読み込み中...") -> some View {
+                        self.modifier(LoadingOverlay(isLoading: isLoading, message: message))
+                    }
+                }

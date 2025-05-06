@@ -20,18 +20,101 @@ class BetRecordViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var showError: Bool = false
     
+    // 拡張状態
+    @Published var isSaving: Bool = false
+    @Published var availableBettingSystems: [BettingSystem] = []
+    @Published var showBettingSystemPicker: Bool = false
+    
     private let coreDataManager: CoreDataManager
     private var cancellables = Set<AnyCancellable>()
     
     init(coreDataManager: CoreDataManager = CoreDataManager.shared) {
         self.coreDataManager = coreDataManager
+        setupBindings()
         loadGambleTypes()
+    }
+    
+    deinit {
+        cancellables.removeAll()
+    }
+    
+    // バインディングの設定
+    private func setupBindings() {
+        // ギャンブル種別変更時の処理
+        $selectedGambleTypeID
+            .compactMap { $0 }
+            .sink { [weak self] typeID in
+                self?.updateBettingSystems(for: typeID)
+            }
+            .store(in: &cancellables)
+        
+        // 金額入力のフォーマット処理
+        $betAmount
+            .dropFirst()
+            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+            .sink { [weak self] value in
+                self?.formatAmountInput(value: value) { formatted in
+                    if formatted != value {
+                        self?.betAmount = formatted
+                    }
+                }
+            }
+            .store(in: &cancellables)
+        
+        $returnAmount
+            .dropFirst()
+            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+            .sink { [weak self] value in
+                self?.formatAmountInput(value: value) { formatted in
+                    if formatted != value {
+                        self?.returnAmount = formatted
+                    }
+                }
+            }
+            .store(in: &cancellables)
+    }
+    
+    // 賭式リストの更新
+    private func updateBettingSystems(for typeID: UUID) {
+        let provider = BettingSystemProvider.shared
+        self.availableBettingSystems = provider.getBettingSystems(for: typeID)
+    }
+    
+    // 金額入力のフォーマット
+    private func formatAmountInput(value: String, completion: @escaping (String) -> Void) {
+        // すでにカンマが含まれている場合はスキップ
+        if value.contains(",") && !value.hasSuffix(",") {
+            return
+        }
+        
+        // 数字以外を除去
+        let numbersOnly = value.filter { "0123456789".contains($0) }
+        
+        // 空なら空文字を返す
+        if numbersOnly.isEmpty {
+            completion("")
+            return
+        }
+        
+        // 数値を整形
+        if let intValue = Int(numbersOnly) {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            formatter.groupingSeparator = ","
+            
+            if let formattedString = formatter.string(from: NSNumber(value: intValue)) {
+                completion(formattedString)
+            } else {
+                completion(numbersOnly)
+            }
+        } else {
+            completion(numbersOnly)
+        }
     }
     
     func loadGambleTypes() {
         isLoading = true
         
-        // do-catch ブロックを使用せずに処理
         coreDataManager.fetchGambleTypes { [weak self] results in
             guard let self = self else { return }
             
@@ -53,6 +136,7 @@ class BetRecordViewModel: ObservableObject {
         guard validateInput() else { return }
         
         isLoading = true
+        isSaving = true
         
         // 入力値の変換を強化 - 条件バインディングの修正
         guard let gambleTypeID = selectedGambleTypeID else {
@@ -70,6 +154,13 @@ class BetRecordViewModel: ObservableObject {
             return
         }
         
+        // 金額の妥当性チェック
+        guard betAmountDecimal >= 0 && betAmountDecimal <= 10000000,
+              returnAmountDecimal >= 0 && returnAmountDecimal <= 100000000 else {
+            showError(message: "金額が許容範囲外です。0〜10,000,000円の範囲で入力してください。")
+            return
+        }
+        
         coreDataManager.saveBetRecord(
             date: selectedDate,
             gambleTypeID: gambleTypeID,
@@ -83,10 +174,12 @@ class BetRecordViewModel: ObservableObject {
             
             DispatchQueue.main.async {
                 self.isLoading = false
+                self.isSaving = false
                 
                 if success {
                     self.resetForm()
                     self.showSuccessMessage = true
+                    self.provideHapticFeedback()
                     
                     // 3秒後に成功メッセージを非表示
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
@@ -97,6 +190,12 @@ class BetRecordViewModel: ObservableObject {
                 }
             }
         }
+    }
+    
+    // 触覚フィードバック
+    private func provideHapticFeedback() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
     }
     
     private func validateInput() -> Bool {
@@ -143,10 +242,11 @@ class BetRecordViewModel: ObservableObject {
         return true
     }
     
-    private func showError(message: String) {
+    func showError(message: String) {
         errorMessage = message
         showError = true
         isLoading = false
+        isSaving = false
     }
     
     private func resetForm() {
@@ -156,5 +256,10 @@ class BetRecordViewModel: ObservableObject {
         betAmount = ""
         returnAmount = ""
         memo = ""
+    }
+    
+    // 賭式選択
+    func selectBettingSystem(_ system: BettingSystem) {
+        bettingSystem = system.name
     }
 }

@@ -30,13 +30,22 @@ struct HistoryView: View {
                 if showDatePicker {
                     DateRangePickerView(
                         startDate: $viewModel.filterStartDate,
-                        endDate: $viewModel.filterEndDate
+                        endDate: $viewModel.filterEndDate,
+                        onQuickSelect: { period in
+                            viewModel.setDateFilter(period: period)
+                        }
                     )
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
                 
                 // 履歴リスト
-                if viewModel.filteredRecords.isEmpty {
+                if viewModel.isLoading {
+                    Spacer()
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .progressViewStyle(CircularProgressViewStyle(tint: .primaryColor))
+                    Spacer()
+                } else if viewModel.filteredRecords.isEmpty {
                     EmptyHistoryView()
                 } else {
                     BetHistoryList(
@@ -61,28 +70,6 @@ struct HistoryView: View {
                     }
                 }
             }
-            .overlay(
-                viewModel.isLoading ?
-                    ZStack {
-                        Color.black.opacity(0.2)
-                            .edgesIgnoringSafeArea(.all)
-                        
-                        VStack(spacing: 16) {
-                            ProgressView()
-                                .scaleEffect(1.5)
-                                .progressViewStyle(CircularProgressViewStyle(tint: .primaryColor))
-                            
-                            Text("読み込み中...")
-                                .font(.caption)
-                                .foregroundColor(.primaryColor)
-                        }
-                        .padding(24)
-                        .background(Color.backgroundSecondary)
-                        .cornerRadius(12)
-                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-                    }
-                    : nil
-            )
             .alert(isPresented: $showDeleteAlert) {
                 Alert(
                     title: Text("記録の削除"),
@@ -171,10 +158,8 @@ struct SearchFilterBar: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 10)
-        .background(
-            Color.backgroundSecondary
-                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-        )
+        .background(Color.backgroundSecondary)
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
 }
 
@@ -278,6 +263,7 @@ struct FilterOptionsView: View {
 struct DateRangePickerView: View {
     @Binding var startDate: Date
     @Binding var endDate: Date
+    var onQuickSelect: (HistoryViewModel.DateFilterPeriod) -> Void
     
     var body: some View {
         VStack(spacing: 12) {
@@ -314,39 +300,36 @@ struct DateRangePickerView: View {
             }
             
             // クイック選択ボタン
-            HStack(spacing: 8) {
-                QuickDateButton(title: "今月", action: {
-                    let today = Date()
-                    startDate = today.startOfMonth()
-                    endDate = today
-                })
-                
-                QuickDateButton(title: "先月", action: {
-                    let today = Date()
-                    let calendar = Calendar.current
-                    if let prevMonth = calendar.date(byAdding: .month, value: -1, to: today) {
-                        startDate = prevMonth.startOfMonth()
-                        endDate = prevMonth.endOfMonth()
-                    }
-                })
-                
-                QuickDateButton(title: "3ヶ月", action: {
-                    let today = Date()
-                    let calendar = Calendar.current
-                    if let threeMonthsAgo = calendar.date(byAdding: .month, value: -3, to: today) {
-                        startDate = threeMonthsAgo
-                        endDate = today
-                    }
-                })
-                
-                QuickDateButton(title: "全期間", action: {
-                    let today = Date()
-                    let calendar = Calendar.current
-                    if let yearAgo = calendar.date(byAdding: .year, value: -3, to: today) {
-                        startDate = yearAgo
-                        endDate = today
-                    }
-                })
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    QuickDateButton(title: "今日", action: {
+                        onQuickSelect(.today)
+                    })
+                    
+                    QuickDateButton(title: "昨日", action: {
+                        onQuickSelect(.yesterday)
+                    })
+                    
+                    QuickDateButton(title: "今週", action: {
+                        onQuickSelect(.thisWeek)
+                    })
+                    
+                    QuickDateButton(title: "今月", action: {
+                        onQuickSelect(.thisMonth)
+                    })
+                    
+                    QuickDateButton(title: "先月", action: {
+                        onQuickSelect(.lastMonth)
+                    })
+                    
+                    QuickDateButton(title: "3ヶ月", action: {
+                        onQuickSelect(.threeMonths)
+                    })
+                    
+                    QuickDateButton(title: "全期間", action: {
+                        onQuickSelect(.allTime)
+                    })
+                }
             }
         }
         .padding()
@@ -354,7 +337,6 @@ struct DateRangePickerView: View {
             Color.backgroundSecondary
                 .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
         )
-        .withBounceAnimation()
     }
 }
 
@@ -400,6 +382,7 @@ struct BetHistoryList: View {
                     .swipeActions(edge: .leading) {
                         Button {
                             // 編集機能（将来の実装）
+                            // 現状は何もしない
                         } label: {
                             Label("編集", systemImage: "pencil")
                         }
@@ -529,24 +512,8 @@ struct EmptyHistoryView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
                 .padding(.bottom, 16)
-            
-            Button(action: {
-                // ここで記録画面に遷移する処理を追加（将来実装）
-            }) {
-                HStack {
-                    Image(systemName: "plus.circle.fill")
-                    Text("記録を追加する")
-                }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
-                .background(Color.primaryColor)
-                .foregroundColor(.white)
-                .cornerRadius(12)
-                .shadow(color: Color.primaryColor.opacity(0.4), radius: 5, x: 0, y: 3)
-            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.backgroundPrimary)
-        .withBounceAnimation()
     }
 }
