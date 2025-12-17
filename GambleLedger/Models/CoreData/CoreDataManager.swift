@@ -109,6 +109,18 @@ class CoreDataManager {
         }
     }
     
+    // MARK: - 単一のベット記録を取得
+    
+    func fetchBetRecord(id: UUID, completion: @escaping (NSManagedObject?) -> Void) {
+        let request = NSFetchRequest<NSManagedObject>(entityName: "BetRecord")
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        request.fetchLimit = 1
+        
+        executeAsyncFetch(request) { results in
+            completion(results.first)
+        }
+    }
+    
     // MARK: - データの保存
     
     func saveBetRecord(
@@ -160,8 +172,61 @@ class CoreDataManager {
         }
     }
     
+    // ベット記録の更新メソッド
+    func updateBetRecord(
+        id: UUID,
+        date: Date,
+        gambleTypeID: UUID,
+        eventName: String,
+        bettingSystem: String,
+        betAmount: Decimal,
+        returnAmount: Decimal,
+        memo: String = "",
+        completion: @escaping (Bool, String?) -> Void
+    ) {
+        let context = createBackgroundContext()
+        let request = NSFetchRequest<NSManagedObject>(entityName: "BetRecord")
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        
+        context.perform {
+            do {
+                let records = try context.fetch(request)
+                guard let recordToUpdate = records.first else {
+                    DispatchQueue.main.async {
+                        completion(false, "更新対象の記録が見つかりませんでした。")
+                    }
+                    return
+                }
+                
+                // 値を更新
+                recordToUpdate.setValue(date, forKey: "date")
+                recordToUpdate.setValue(gambleTypeID, forKey: "gambleTypeID")
+                recordToUpdate.setValue(eventName, forKey: "eventName")
+                recordToUpdate.setValue(bettingSystem, forKey: "bettingSystem")
+                recordToUpdate.setValue(NSDecimalNumber(decimal: betAmount), forKey: "betAmount")
+                recordToUpdate.setValue(NSDecimalNumber(decimal: returnAmount), forKey: "returnAmount")
+                recordToUpdate.setValue(memo, forKey: "memo")
+                recordToUpdate.setValue(returnAmount > betAmount, forKey: "isWin")
+                recordToUpdate.setValue(Date(), forKey: "updatedAt")
+                
+                try context.save()
+                
+                DispatchQueue.main.async {
+                    completion(true, nil)
+                }
+            } catch {
+                print("Update error: \(error)")
+                context.rollback()
+                
+                DispatchQueue.main.async {
+                    completion(false, "更新中にエラーが発生しました: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
     // ベット記録の削除メソッド
-    func deleteBetRecord(id: UUID, completion: @escaping (Bool) -> Void) {
+    func deleteBetRecord(id: UUID, completion: @escaping (Bool, String?) -> Void) {
         // バックグラウンドコンテキストで削除処理を実行
         let context = createBackgroundContext()
         let request = NSFetchRequest<NSManagedObject>(entityName: "BetRecord")
@@ -175,11 +240,11 @@ class CoreDataManager {
                     try context.save()
                     
                     DispatchQueue.main.async {
-                        completion(true)
+                        completion(true, nil)
                     }
                 } else {
                     DispatchQueue.main.async {
-                        completion(false)
+                        completion(false, "削除対象の記録が見つかりませんでした。")
                     }
                 }
             } catch {
@@ -189,7 +254,87 @@ class CoreDataManager {
                 context.rollback()
                 
                 DispatchQueue.main.async {
-                    completion(false)
+                    completion(false, "削除中にエラーが発生しました: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    // 予算の更新メソッド
+    func updateBudget(
+        id: UUID,
+        amount: Decimal,
+        startDate: Date,
+        endDate: Date,
+        notifyThreshold: Int,
+        gambleTypeID: UUID? = nil,
+        completion: @escaping (Bool, String?) -> Void
+    ) {
+        let context = createBackgroundContext()
+        let request = NSFetchRequest<NSManagedObject>(entityName: "Budget")
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        
+        context.perform {
+            do {
+                let budgets = try context.fetch(request)
+                guard let budgetToUpdate = budgets.first else {
+                    DispatchQueue.main.async {
+                        completion(false, "更新対象の予算が見つかりませんでした。")
+                    }
+                    return
+                }
+                
+                // 値を更新
+                budgetToUpdate.setValue(NSDecimalNumber(decimal: amount), forKey: "amount")
+                budgetToUpdate.setValue(startDate, forKey: "startDate")
+                budgetToUpdate.setValue(endDate, forKey: "endDate")
+                budgetToUpdate.setValue(notifyThreshold, forKey: "notifyThreshold")
+                budgetToUpdate.setValue(gambleTypeID, forKey: "gambleTypeID")
+                budgetToUpdate.setValue(Date(), forKey: "updatedAt")
+                
+                try context.save()
+                
+                DispatchQueue.main.async {
+                    completion(true, nil)
+                }
+            } catch {
+                print("Update budget error: \(error)")
+                context.rollback()
+                
+                DispatchQueue.main.async {
+                    completion(false, "予算の更新中にエラーが発生しました: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    // 予算の削除メソッド
+    func deleteBudget(id: UUID, completion: @escaping (Bool, String?) -> Void) {
+        let context = createBackgroundContext()
+        let request = NSFetchRequest<NSManagedObject>(entityName: "Budget")
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        
+        context.perform {
+            do {
+                let budgets = try context.fetch(request)
+                if let budgetToDelete = budgets.first {
+                    context.delete(budgetToDelete)
+                    try context.save()
+                    
+                    DispatchQueue.main.async {
+                        completion(true, nil)
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        completion(false, "削除対象の予算が見つかりませんでした。")
+                    }
+                }
+            } catch {
+                print("Delete budget error: \(error)")
+                context.rollback()
+                
+                DispatchQueue.main.async {
+                    completion(false, "予算の削除中にエラーが発生しました: \(error.localizedDescription)")
                 }
             }
         }

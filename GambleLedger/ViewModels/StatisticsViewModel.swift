@@ -33,16 +33,37 @@ class StatisticsViewModel: ObservableObject {
     @Published var maxLossAmount: Decimal = 0
     @Published var maxWinStreak: Int = 0
     
+    // 全レコード（詳細統計用）
+    @Published var allRecords: [BetDisplayModel] = []
+    
+    // ギャンブル種別キャッシュ
+    private var gambleTypesCache: [GambleTypeModel] = []
+    
     private let coreDataManager: CoreDataManager
     private var cancellables = Set<AnyCancellable>()
     
     init(coreDataManager: CoreDataManager = CoreDataManager.shared) {
         self.coreDataManager = coreDataManager
-        loadStatisticsData()
+        loadGambleTypes()
     }
     
     deinit {
         cancellables.removeAll()
+    }
+    
+    // ギャンブル種別をロード
+    private func loadGambleTypes() {
+        coreDataManager.fetchGambleTypes { [weak self] results in
+            guard let self = self else { return }
+            
+            let types = results.compactMap { GambleTypeModel.fromManagedObject($0) }
+            
+            DispatchQueue.main.async {
+                self.gambleTypesCache = types
+                // ギャンブル種別をロード後に統計データをロード
+                self.loadStatisticsData()
+            }
+        }
     }
     
     func loadStatisticsData() {
@@ -106,6 +127,9 @@ class StatisticsViewModel: ObservableObject {
             // 追加の統計データを計算
             self.calculateAdditionalStats(from: records)
             
+            // allRecordsを更新（BetDisplayModelに変換）
+            self.updateAllRecords(from: records)
+            
             DispatchQueue.main.async {
                 self.totalStats = StatsSummary(
                     totalBet: totalBet,
@@ -122,6 +146,24 @@ class StatisticsViewModel: ObservableObject {
                 
                 self.isLoading = false
             }
+        }
+    }
+    
+    // allRecordsを更新
+    private func updateAllRecords(from records: [NSManagedObject]) {
+        // NSManagedObjectからBetDisplayModelに変換
+        var displayRecords: [BetDisplayModel] = []
+        
+        for record in records {
+            let betRecord = BetRecordModel.fromManagedObject(record)
+            // ギャンブル種別の情報を取得
+            let gambleType = gambleTypesCache.first { $0.id == betRecord.gambleTypeID }
+            let displayModel = betRecord.toDisplayModel(with: gambleType)
+            displayRecords.append(displayModel)
+        }
+        
+        DispatchQueue.main.async {
+            self.allRecords = displayRecords
         }
     }
     

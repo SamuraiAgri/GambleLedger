@@ -4,6 +4,7 @@ import Charts
 
 struct StatisticsView: View {
     @StateObject private var viewModel = StatisticsViewModel()
+    @State private var showDetailedStats = false
     
     var body: some View {
         NavigationView {
@@ -32,9 +33,23 @@ struct StatisticsView: View {
                 .padding(.vertical)
             }
             .navigationTitle("統計")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showDetailedStats = true
+                    }) {
+                        Image(systemName: "chart.bar.doc.horizontal")
+                            .foregroundColor(.primaryColor)
+                    }
+                    .accessibilityLabel("詳細統計を表示")
+                }
+            }
             .overlay(loadingOverlay)
             .refreshable {
                 viewModel.loadStatisticsData()
+            }
+            .sheet(isPresented: $showDetailedStats) {
+                DetailedStatisticsView(records: viewModel.allRecords)
             }
         }
         .withErrorHandling()

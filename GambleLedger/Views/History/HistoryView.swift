@@ -6,6 +6,11 @@ struct HistoryView: View {
     @State private var showDatePicker = false
     @State private var showDeleteAlert = false
     @State private var recordToDelete: String?
+    @State private var showEditView = false
+    @State private var recordToEdit: BetRecordModel?
+    @State private var showExportMenu = false
+    @State private var exportToCSV = false
+    @State private var exportToJSON = false
     @EnvironmentObject private var errorHandler: ErrorHandler
     
     var body: some View {
@@ -53,6 +58,12 @@ struct HistoryView: View {
                         onDelete: { id in
                             recordToDelete = id
                             showDeleteAlert = true
+                        },
+                        onEdit: { id in
+                            if let record = viewModel.getBetRecordModel(id: id) {
+                                recordToEdit = record
+                                showEditView = true
+                            }
                         }
                     )
                 }
@@ -60,13 +71,38 @@ struct HistoryView: View {
             .navigationTitle("ベット履歴")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        withAnimation {
-                            viewModel.loadBetRecords()
+                    HStack(spacing: 16) {
+                        // エクスポートボタン
+                        if !viewModel.filteredRecords.isEmpty {
+                            Menu {
+                                Button(action: {
+                                    exportToCSV = true
+                                }) {
+                                    Label("CSVでエクスポート", systemImage: "doc.text")
+                                }
+                                
+                                Button(action: {
+                                    exportToJSON = true
+                                }) {
+                                    Label("JSONでエクスポート", systemImage: "doc.badge.gearshape")
+                                }
+                            } label: {
+                                Image(systemName: "square.and.arrow.up")
+                                    .foregroundColor(.secondaryColor)
+                            }
+                            .accessibilityLabel("データをエクスポート")
                         }
-                    }) {
-                        Image(systemName: "arrow.clockwise")
-                            .foregroundColor(.primaryColor)
+                        
+                        // リフレッシュボタン
+                        Button(action: {
+                            withAnimation {
+                                viewModel.loadBetRecords()
+                            }
+                        }) {
+                            Image(systemName: "arrow.clockwise")
+                                .foregroundColor(.primaryColor)
+                        }
+                        .accessibilityLabel("データを再読み込み")
                     }
                 }
             }
@@ -89,6 +125,17 @@ struct HistoryView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
+            .sheet(isPresented: $showEditView) {
+                if let record = recordToEdit {
+                    EditBetRecordView(viewModel: EditBetRecordViewModel(record: record))
+                        .onDisappear {
+                            // 編集後にデータを再読み込み
+                            viewModel.loadBetRecords()
+                        }
+                }
+            }
+            .exportData(isPresented: $exportToCSV, records: viewModel.filteredRecords, format: .csv)
+            .exportData(isPresented: $exportToJSON, records: viewModel.filteredRecords, format: .json)
         }
         .withErrorHandling()
     }
@@ -364,6 +411,7 @@ struct QuickDateButton: View {
 struct BetHistoryList: View {
     let records: [BetDisplayModel]
     let onDelete: (String) -> Void
+    let onEdit: (String) -> Void
     
     var body: some View {
         List {
@@ -372,21 +420,22 @@ struct BetHistoryList: View {
                     .padding(.vertical, 4)
                     .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                     .background(Color.backgroundSecondary)
-                    .swipeActions(edge: .trailing) {
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
                             onDelete(record.id)
                         } label: {
                             Label("削除", systemImage: "trash")
                         }
+                        .accessibilityLabel("記録を削除")
                     }
-                    .swipeActions(edge: .leading) {
+                    .swipeActions(edge: .leading, allowsFullSwipe: false) {
                         Button {
-                            // 編集機能（将来の実装）
-                            // 現状は何もしない
+                            onEdit(record.id)
                         } label: {
                             Label("編集", systemImage: "pencil")
                         }
                         .tint(.secondaryColor)
+                        .accessibilityLabel("記録を編集")
                     }
             }
         }

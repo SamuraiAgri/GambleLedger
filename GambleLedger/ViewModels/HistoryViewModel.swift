@@ -8,6 +8,9 @@ class HistoryViewModel: ObservableObject {
     @Published var betRecords: [BetDisplayModel] = []
     @Published var filteredRecords: [BetDisplayModel] = []
     
+    // BetRecordModelのキャッシュ（編集時に使用）
+    private var recordModelsCache: [String: BetRecordModel] = [:]
+    
     // フィルタ設定
     @Published var filterStartDate: Date = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
     @Published var filterEndDate: Date = Date()
@@ -100,6 +103,7 @@ class HistoryViewModel: ObservableObject {
             guard let self = self else { return }
             
             var displayModels: [BetDisplayModel] = []
+            var modelsCache: [String: BetRecordModel] = [:]
             
             for record in records {
                 if let gambleTypeID = record.value(forKey: "gambleTypeID") as? UUID {
@@ -109,11 +113,13 @@ class HistoryViewModel: ObservableObject {
                     let displayModel = betRecord.toDisplayModel(with: gambleType)
                     
                     displayModels.append(displayModel)
+                    modelsCache[betRecord.id.uuidString] = betRecord
                 }
             }
             
             DispatchQueue.main.async {
                 self.betRecords = displayModels
+                self.recordModelsCache = modelsCache
                 self.applyFiltersAndSort()
                 self.isLoading = false
             }
@@ -180,7 +186,7 @@ class HistoryViewModel: ObservableObject {
         isDeleting = true
         
         // CoreDataから削除する処理を実装
-        coreDataManager.deleteBetRecord(id: uuid) { [weak self] success in
+        coreDataManager.deleteBetRecord(id: uuid) { [weak self] success, errorMsg in
             guard let self = self else { return }
             
             DispatchQueue.main.async {
@@ -197,12 +203,21 @@ class HistoryViewModel: ObservableObject {
                         self.betRecords.remove(at: index)
                     }
                     
+                    // キャッシュからも削除
+                    self.recordModelsCache.removeValue(forKey: id)
+                    
                     self.provideHapticFeedback(type: .success)
                 } else {
-                    self.showError(message: "削除中にエラーが発生しました")
+                    self.showError(message: errorMsg ?? "削除中にエラーが発生しました")
                 }
             }
         }
+    }
+    
+    // BetRecordModelを取得
+    func getBetRecordModel(id: String) -> BetRecordModel? {
+        // キャッシュから取得（メモも含む完全なデータ）
+        return recordModelsCache[id]
     }
     
     // 触覚フィードバック
