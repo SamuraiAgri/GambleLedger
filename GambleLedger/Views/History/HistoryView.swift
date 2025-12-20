@@ -68,6 +68,7 @@ struct HistoryView: View {
                     )
                 }
             }
+            .background(Color.backgroundPrimary.edgesIgnoringSafeArea(.all))
             .navigationTitle("ベット履歴")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

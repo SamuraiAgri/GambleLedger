@@ -32,6 +32,7 @@ struct StatisticsView: View {
                 }
                 .padding(.vertical)
             }
+            .background(Color.backgroundPrimary.edgesIgnoringSafeArea(.all))
             .navigationTitle("統計")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
