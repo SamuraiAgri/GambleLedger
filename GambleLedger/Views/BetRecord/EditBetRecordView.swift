@@ -28,7 +28,7 @@ struct EditBetRecordView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
                             ForEach(viewModel.gambleTypes) { type in
-                                TypeButton(
+                                EditTypeButton(
                                     gambleType: type,
                                     isSelected: viewModel.selectedGambleTypeID == type.id,
                                     action: {
@@ -224,7 +224,7 @@ struct EditBetRecordView: View {
                 }
             }
             .sheet(isPresented: $viewModel.showBettingSystemPicker) {
-                BettingSystemPickerView(
+                EditBettingSystemPickerView(
                     systems: viewModel.availableBettingSystems,
                     onSelect: { system in
                         viewModel.selectBettingSystem(system)
@@ -236,8 +236,8 @@ struct EditBetRecordView: View {
     }
 }
 
-// TypeButtonコンポーネント（既存のコンポーネントを使用）
-private struct TypeButton: View {
+// TypeButtonコンポーネント（編集画面専用）
+private struct EditTypeButton: View {
     let gambleType: GambleTypeModel
     let isSelected: Bool
     let action: () -> Void
@@ -264,8 +264,8 @@ private struct TypeButton: View {
     }
 }
 
-// 賭式選択ピッカー
-private struct BettingSystemPickerView: View {
+// 賭式選択ピッカー（編集画面専用）
+private struct EditBettingSystemPickerView: View {
     let systems: [BettingSystem]
     let onSelect: (BettingSystem) -> Void
     @Environment(\.dismiss) private var dismiss

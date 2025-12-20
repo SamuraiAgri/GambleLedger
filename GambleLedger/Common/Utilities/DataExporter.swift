@@ -1,5 +1,6 @@
 // GambleLedger/Common/Utilities/DataExporter.swift
 import Foundation
+import SwiftUI
 import UIKit
 
 class DataExporter {
