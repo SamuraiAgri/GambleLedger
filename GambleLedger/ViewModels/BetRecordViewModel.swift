@@ -163,11 +163,17 @@ class BetRecordViewModel: ObservableObject {
             return
         }
         
+        // 簡易モード対応：イベント名と賭式が空の場合はデフォルト値を使用
+        let finalEventName = eventName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty 
+            ? "記録" : eventName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let finalBettingSystem = bettingSystem.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty 
+            ? "-" : bettingSystem.trimmingCharacters(in: .whitespacesAndNewlines)
+        
         coreDataManager.saveBetRecord(
             date: selectedDate,
             gambleTypeID: gambleTypeID,
-            eventName: eventName.trimmingCharacters(in: .whitespacesAndNewlines),
-            bettingSystem: bettingSystem.trimmingCharacters(in: .whitespacesAndNewlines),
+            eventName: finalEventName,
+            bettingSystem: finalBettingSystem,
             betAmount: betAmountDecimal,
             returnAmount: returnAmountDecimal,
             memo: memo.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -208,19 +214,7 @@ class BetRecordViewModel: ObservableObject {
             return false
         }
         
-        // イベント名の入力チェック
-        if eventName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            showError(message: "試合/レース名を入力してください。")
-            return false
-        }
-        
-        // 賭式の入力チェック
-        if bettingSystem.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            showError(message: "賭式を入力してください。")
-            return false
-        }
-        
-        // 金額の入力チェック
+        // 金額の入力チェック（必須）
         if betAmount.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             showError(message: "賭け金額を入力してください。")
             return false
@@ -242,6 +236,7 @@ class BetRecordViewModel: ObservableObject {
             return false
         }
         
+        // イベント名と賭式は任意（簡易モード対応）
         return true
     }
     

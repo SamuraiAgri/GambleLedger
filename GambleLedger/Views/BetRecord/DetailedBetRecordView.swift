@@ -4,7 +4,6 @@ import SwiftUI
 /// 詳細記録モード - すべての情報を入力可能
 struct DetailedBetRecordView: View {
     @StateObject private var viewModel = BetRecordViewModel()
-    @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) private var dismiss
     
     // キーボード管理

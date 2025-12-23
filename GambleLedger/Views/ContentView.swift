@@ -14,7 +14,7 @@ struct ContentView: View {
                 }
                 .tag(0)
             
-            BetRecordView()
+            BetRecordModeSelector()
                 .tabItem {
                     Label("記録", systemImage: "plus.circle")
                 }

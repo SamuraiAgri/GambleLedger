@@ -3,7 +3,6 @@ import SwiftUI
 
 /// 記録モード選択画面 - 簡易/詳細を選択
 struct BetRecordModeSelector: View {
-    @Environment(\.dismiss) private var dismiss
     @State private var showSimpleMode = false
     @State private var showDetailedMode = false
     
@@ -51,31 +50,12 @@ struct BetRecordModeSelector: View {
             }
             .background(Color.backgroundPrimary.edgesIgnoringSafeArea(.all))
             .navigationTitle("ベット記録")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("キャンセル") {
-                        dismiss()
-                    }
-                }
-            }
+            .navigationBarTitleDisplayMode(.large)
             .fullScreenCover(isPresented: $showSimpleMode) {
                 SimpleBetRecordView()
-                    .onDisappear {
-                        // 簡易記録が完了したら選択画面も閉じる
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            dismiss()
-                        }
-                    }
             }
             .fullScreenCover(isPresented: $showDetailedMode) {
                 DetailedBetRecordView()
-                    .onDisappear {
-                        // 詳細記録が完了したら選択画面も閉じる
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            dismiss()
-                        }
-                    }
             }
         }
     }

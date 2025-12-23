@@ -208,14 +208,9 @@ struct SimpleBetRecordView: View {
     
     // 簡易記録の保存
     private func saveSimpleRecord() {
-        // 最小限の情報で保存
-        viewModel.eventName = "記録" // デフォルト値
-        viewModel.bettingSystem = "-" // 賭式なし
-        viewModel.memo = "" // メモなし
-        
         viewModel.saveBetRecord()
         
-        // 保存成功したら1秒後に閉じる
+        // 保存成功を監視して自動的に閉じる
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             if viewModel.showSuccessMessage {
                 dismiss()
