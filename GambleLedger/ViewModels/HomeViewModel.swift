@@ -4,6 +4,7 @@ import Combine
 import CoreData
 import SwiftUI
 
+@MainActor
 class HomeViewModel: ObservableObject {
     @Published var todayStats: DailyStats = DailyStats()
     @Published var monthlyStats: MonthlyStats = MonthlyStats()

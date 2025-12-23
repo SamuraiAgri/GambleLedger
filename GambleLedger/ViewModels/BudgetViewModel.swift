@@ -3,6 +3,7 @@ import Foundation
 import Combine
 import SwiftUI
 
+@MainActor
 class BudgetViewModel: ObservableObject {
     // 入力フィールド
     @Published var budgetAmount: String = ""

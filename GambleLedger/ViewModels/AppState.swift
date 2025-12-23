@@ -4,6 +4,7 @@ import Combine
 import SwiftUI
 import CoreData
 
+@MainActor
 class AppState: ObservableObject {
     @Published var selectedTab: Int = 0
     @Published var showAddBetSheet: Bool = false

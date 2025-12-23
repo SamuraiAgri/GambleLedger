@@ -4,6 +4,7 @@ import Combine
 import SwiftUI
 import CoreData
 
+@MainActor
 class StatisticsViewModel: ObservableObject {
     // 統計表示期間
     enum PeriodFilter: String, CaseIterable, Identifiable {
@@ -124,13 +125,13 @@ class StatisticsViewModel: ObservableObject {
             
             let winRate = records.isEmpty ? 0 : Double(wins) / Double(records.count) * 100
             
-            // 追加の統計データを計算
-            self.calculateAdditionalStats(from: records)
-            
-            // allRecordsを更新（BetDisplayModelに変換）
-            self.updateAllRecords(from: records)
-            
             DispatchQueue.main.async {
+                // 追加の統計データを計算
+                self.calculateAdditionalStats(from: records)
+                
+                // allRecordsを更新（BetDisplayModelに変換）
+                self.updateAllRecords(from: records)
+                
                 self.totalStats = StatsSummary(
                     totalBet: totalBet,
                     totalReturn: totalReturn,
@@ -162,9 +163,7 @@ class StatisticsViewModel: ObservableObject {
             displayRecords.append(displayModel)
         }
         
-        DispatchQueue.main.async {
-            self.allRecords = displayRecords
-        }
+        self.allRecords = displayRecords
     }
     
     // 追加の統計を計算

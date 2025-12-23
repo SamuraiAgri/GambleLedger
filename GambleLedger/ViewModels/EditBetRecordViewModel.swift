@@ -3,6 +3,7 @@ import Foundation
 import Combine
 import SwiftUI
 
+@MainActor
 class EditBetRecordViewModel: ObservableObject {
     // 編集対象のID
     let recordID: UUID

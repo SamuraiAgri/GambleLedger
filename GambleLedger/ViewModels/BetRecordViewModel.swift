@@ -3,11 +3,13 @@ import Foundation
 import Combine
 import SwiftUI
 
+@MainActor
 class BetRecordViewModel: ObservableObject {
     // 入力フィールド
     @Published var selectedDate: Date = Date()
     @Published var selectedGambleTypeID: UUID?
     @Published var eventName: String = ""
+    @Published var raceNumber: String = ""
     @Published var bettingSystem: String = ""
     @Published var betAmount: String = ""
     @Published var returnAmount: String = ""
@@ -179,6 +181,7 @@ class BetRecordViewModel: ObservableObject {
                 if success {
                     self.resetForm()
                     self.showSuccessMessage = true
+                    self.showSuccessAlert = true
                     self.provideHapticFeedback()
                     
                     // 3秒後に成功メッセージを非表示
@@ -245,6 +248,7 @@ class BetRecordViewModel: ObservableObject {
     func showError(message: String) {
         errorMessage = message
         showError = true
+        showErrorAlert = true
         isLoading = false
         isSaving = false
     }
@@ -262,4 +266,45 @@ class BetRecordViewModel: ObservableObject {
     func selectBettingSystem(_ system: BettingSystem) {
         bettingSystem = system.name
     }
+    
+    // MARK: - 計算プロパティ
+    
+    /// 選択されたギャンブル種別の名前
+    var selectedGambleTypeName: String {
+        guard let typeID = selectedGambleTypeID,
+              let type = gambleTypes.first(where: { $0.id == typeID }) else {
+            return ""
+        }
+        return type.name
+    }
+    
+    /// 計算された損益
+    var calculatedProfit: Decimal? {
+        guard let bet = Decimal(string: betAmount.replacingOccurrences(of: ",", with: "")),
+              let return_ = Decimal(string: returnAmount.replacingOccurrences(of: ",", with: "")) else {
+            return nil
+        }
+        return return_ - bet
+    }
+    
+    /// 入力が有効かどうか（簡易モード用）
+    var isValidSimple: Bool {
+        guard selectedGambleTypeID != nil else { return false }
+        guard !betAmount.isEmpty else { return false }
+        guard !returnAmount.isEmpty else { return false }
+        guard Decimal(string: betAmount.replacingOccurrences(of: ",", with: "")) != nil else { return false }
+        guard Decimal(string: returnAmount.replacingOccurrences(of: ",", with: "")) != nil else { return false }
+        return true
+    }
+    
+    /// 入力が有効かどうか（詳細モード用）
+    var isValid: Bool {
+        return isValidSimple
+    }
+    
+    /// 成功アラート表示フラグ
+    @Published var showSuccessAlert: Bool = false
+    
+    /// エラーアラート表示フラグ
+    @Published var showErrorAlert: Bool = false
 }

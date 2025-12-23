@@ -3,6 +3,7 @@ import Foundation
 import Combine
 import SwiftUI
 
+@MainActor
 class HistoryViewModel: ObservableObject {
     // 表示データ
     @Published var betRecords: [BetDisplayModel] = []

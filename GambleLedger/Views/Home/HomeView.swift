@@ -43,7 +43,7 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $appState.showAddBetSheet) {
-                QuickBetRecordView()
+                BetRecordModeSelector()
             }
             .refreshable {
                 viewModel.loadData()
