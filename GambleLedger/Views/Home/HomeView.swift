@@ -5,6 +5,7 @@ struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
     @EnvironmentObject var appState: AppState
     @State private var selectedCalendarDate: Date?
+    @State private var showDailyBetList = false
     
     var body: some View {
         NavigationView {
@@ -52,9 +53,9 @@ struct HomeView: View {
                             dailyProfits: viewModel.dailyProfits,
                             dailyBets: viewModel.dailyBets,
                             onDateSelected: { date in
-                                // 日付選択時に記録画面を開く
+                                // 日付選択時にその日の記録一覧を表示
                                 selectedCalendarDate = date
-                                appState.showAddBetSheet = true
+                                showDailyBetList = true
                             }
                         )
                     }
@@ -104,6 +105,16 @@ struct HomeView: View {
                         // データを再読み込み
                         viewModel.loadData()
                     }
+            }
+            .sheet(isPresented: $showDailyBetList) {
+                if let date = selectedCalendarDate {
+                    DailyBetListView(date: date)
+                        .onDisappear {
+                            // シートが閉じられたら選択日付をクリアしてデータを再読み込み
+                            selectedCalendarDate = nil
+                            viewModel.loadData()
+                        }
+                }
             }
             .refreshable {
                 viewModel.loadData()
