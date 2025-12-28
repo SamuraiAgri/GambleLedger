@@ -97,19 +97,19 @@ class DailyBetListViewModel: ObservableObject {
         }
     }
     
-    /// UUIDから完全なBetRecordModelを取得
-    func getBetRecordModel(for id: UUID) -> BetRecordModel? {
-        var result: BetRecordModel?
-        let semaphore = DispatchSemaphore(value: 0)
-        
+    /// UUIDから完全なBetRecordModelを非同期で取得
+    func getBetRecordModel(for id: UUID, completion: @escaping (BetRecordModel?) -> Void) {
         coreDataManager.fetchBetRecord(id: id) { record in
             if let record = record {
-                result = BetRecordModel.fromManagedObject(record)
+                let model = BetRecordModel.fromManagedObject(record)
+                DispatchQueue.main.async {
+                    completion(model)
+                }
+            } else {
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
             }
-            semaphore.signal()
         }
-        
-        semaphore.wait()
-        return result
     }
 }

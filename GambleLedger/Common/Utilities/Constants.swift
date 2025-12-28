@@ -15,7 +15,7 @@ struct Constants {
         static let horse = GambleTypeDefinition(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
             name: "競馬",
-            icon: "figure.equestrian.sports",
+            icon: "🏇",
             color: "#D32F2F"
         )
         

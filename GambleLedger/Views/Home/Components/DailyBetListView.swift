@@ -10,6 +10,7 @@ struct DailyBetListView: View {
     @State private var showDetailedRecord = false
     @State private var showEditView = false
     @State private var recordToEditId: String?
+    @State private var recordToEdit: BetRecordModel?
     @State private var showDeleteAlert = false
     @State private var recordToDelete: String?
     
@@ -48,7 +49,13 @@ struct DailyBetListView: View {
                                     
                                     Button {
                                         recordToEditId = record.id
-                                        showEditView = true
+                                        // データを非同期で取得
+                                        if let uuid = UUID(uuidString: record.id) {
+                                            viewModel.getBetRecordModel(for: uuid) { model in
+                                                recordToEdit = model
+                                                showEditView = true
+                                            }
+                                        }
                                     } label: {
                                         Label("編集", systemImage: "pencil")
                                     }
@@ -105,12 +112,11 @@ struct DailyBetListView: View {
                     }
             }
             .sheet(isPresented: $showEditView) {
-                if let recordId = recordToEditId,
-                   let uuid = UUID(uuidString: recordId),
-                   let betRecord = viewModel.getBetRecordModel(for: uuid) {
+                if let betRecord = recordToEdit {
                     EditBetRecordView(viewModel: EditBetRecordViewModel(record: betRecord))
                         .onDisappear {
                             recordToEditId = nil
+                            recordToEdit = nil
                             viewModel.loadRecords()
                         }
                 }
