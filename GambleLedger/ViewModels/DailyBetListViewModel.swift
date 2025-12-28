@@ -5,7 +5,7 @@ import SwiftUI
 
 @MainActor
 class DailyBetListViewModel: ObservableObject {
-    @Published var records: [BetRecordModel] = []
+    @Published var records: [DailyBetRecord] = []
     @Published var totalBet: Decimal = 0
     @Published var totalReturn: Decimal = 0
     @Published var profit: Decimal = 0
@@ -33,9 +33,9 @@ class DailyBetListViewModel: ObservableObject {
         ) { [weak self] fetchedRecords in
             guard let self = self else { return }
             
-            // NSManagedObjectをBetRecordModelに変換
-            let models = fetchedRecords.compactMap { record -> BetRecordModel? in
-                guard let id = record.value(forKey: "id") as? String,
+            // NSManagedObjectをDailyBetRecordに変換
+            let models = fetchedRecords.compactMap { record -> DailyBetRecord? in
+                guard let id = record.value(forKey: "id") as? UUID,
                       let date = record.value(forKey: "date") as? Date,
                       let gambleTypeName = record.value(forKey: "gambleType") as? String else {
                     return nil
@@ -46,8 +46,8 @@ class DailyBetListViewModel: ObservableObject {
                 let memo = record.value(forKey: "memo") as? String ?? ""
                 let profit = returnAmount - betAmount
                 
-                return BetRecordModel(
-                    id: id,
+                return DailyBetRecord(
+                    id: id.uuidString,
                     date: date,
                     gambleTypeName: gambleTypeName,
                     betAmount: betAmount,
@@ -76,12 +76,35 @@ class DailyBetListViewModel: ObservableObject {
     }
     
     func deleteRecord(id: String) {
-        coreDataManager.deleteBetRecord(id: id) { [weak self] success in
+        guard let uuid = UUID(uuidString: id) else {
+            print("Invalid UUID string: \(id)")
+            return
+        }
+        
+        coreDataManager.deleteBetRecord(id: uuid) { [weak self] success, error in
             if success {
                 DispatchQueue.main.async {
                     self?.loadRecords()
                 }
+            } else if let error = error {
+                print("Delete error: \(error)")
             }
         }
+    }
+    
+    /// UUIDから完全なBetRecordModelを取得
+    func getBetRecordModel(for id: UUID) -> BetRecordModel? {
+        var result: BetRecordModel?
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        coreDataManager.fetchBetRecord(id: id) { record in
+            if let record = record {
+                result = BetRecordModel.fromManagedObject(record)
+            }
+            semaphore.signal()
+        }
+        
+        semaphore.wait()
+        return result
     }
 }

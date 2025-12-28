@@ -9,7 +9,7 @@ struct DailyBetListView: View {
     @State private var showSimpleRecord = false
     @State private var showDetailedRecord = false
     @State private var showEditView = false
-    @State private var recordToEdit: BetRecordModel?
+    @State private var recordToEditId: String?
     @State private var showDeleteAlert = false
     @State private var recordToDelete: String?
     
@@ -47,7 +47,7 @@ struct DailyBetListView: View {
                                     }
                                     
                                     Button {
-                                        recordToEdit = record
+                                        recordToEditId = record.id
                                         showEditView = true
                                     } label: {
                                         Label("編集", systemImage: "pencil")
@@ -104,11 +104,16 @@ struct DailyBetListView: View {
                         viewModel.loadRecords()
                     }
             }
-            .sheet(item: $recordToEdit) { record in
-                EditBetRecordView(recordId: record.id)
-                    .onDisappear {
-                        viewModel.loadRecords()
-                    }
+            .sheet(isPresented: $showEditView) {
+                if let recordId = recordToEditId,
+                   let uuid = UUID(uuidString: recordId),
+                   let betRecord = viewModel.getBetRecordModel(for: uuid) {
+                    EditBetRecordView(viewModel: EditBetRecordViewModel(record: betRecord))
+                        .onDisappear {
+                            recordToEditId = nil
+                            viewModel.loadRecords()
+                        }
+                }
             }
             .alert("記録を削除", isPresented: $showDeleteAlert) {
                 Button("キャンセル", role: .cancel) {
@@ -187,7 +192,7 @@ struct DailySummaryHeader: View {
 
 // MARK: - Daily Bet Row View
 struct DailyBetRowView: View {
-    let record: BetRecordModel
+    let record: DailyBetRecord
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -316,8 +321,8 @@ struct AddRecordButtonsView: View {
     }
 }
 
-// MARK: - BetRecordModel for Display
-struct BetRecordModel: Identifiable {
+// MARK: - DailyBetRecord for Display
+struct DailyBetRecord: Identifiable {
     let id: String
     let date: Date
     let gambleTypeName: String
