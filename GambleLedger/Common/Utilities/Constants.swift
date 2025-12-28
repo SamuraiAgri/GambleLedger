@@ -3,17 +3,25 @@ import SwiftUI
 
 struct Constants {
     struct GambleTypes {
-        // 競馬 - horseshoeを別のアイコンに変更
+        // パチンコ
+        static let pachinko = GambleTypeDefinition(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
+            name: "パチンコ",
+            icon: "dollarsign.circle.fill",
+            color: "#FFC107"
+        )
+        
+        // 競馬
         static let horse = GambleTypeDefinition(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
             name: "競馬",
-            icon: "figure.equestrian", // iOS 16以降で使用可能なアイコン
-            // アイコンがない場合の代替
-            // icon: "crown.fill", // より一般的なアイコン
-            color: "#00ACC1"
+            icon: "figure.equestrian.sports",
+            color: "#D32F2F"
         )
         
         // 競艇
         static let boat = GambleTypeDefinition(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!,
             name: "競艇",
             icon: "sailboat.fill",
             color: "#039BE5"
@@ -21,6 +29,7 @@ struct Constants {
         
         // 競輪
         static let bike = GambleTypeDefinition(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000004")!,
             name: "競輪",
             icon: "bicycle.circle.fill",
             color: "#8E24AA"
@@ -28,23 +37,18 @@ struct Constants {
         
         // スポーツベット
         static let sports = GambleTypeDefinition(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000005")!,
             name: "スポーツ",
             icon: "sportscourt.fill",
             color: "#7B1FA2"
         )
         
-        // パチンコ
-        static let pachinko = GambleTypeDefinition(
-            name: "パチンコ",
-            icon: "dollarsign.circle.fill",
-            color: "#FFC107"
-        )
-        
         // その他
         static let other = GambleTypeDefinition(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000006")!,
             name: "その他",
             icon: "dice.fill",
-            color: "#00ACC1"
+            color: "#78909C"
         )
     }
     
@@ -69,6 +73,7 @@ struct Constants {
 
 // ギャンブル種別の定義
 struct GambleTypeDefinition {
+    let id: UUID
     let name: String
     let icon: String
     let color: String
