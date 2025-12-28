@@ -5,6 +5,7 @@ import SwiftUI
 struct CalendarView: View {
     let month: Date
     let dailyProfits: [Date: Decimal]
+    let dailyBets: [Date: Decimal] // 日別の賭け金額を追加
     let onDateSelected: (Date) -> Void
     
     @State private var selectedDate: Date?
@@ -42,6 +43,7 @@ struct CalendarView: View {
                         CalendarDayCell(
                             date: date,
                             profit: dailyProfits[calendar.startOfDay(for: date)],
+                            betAmount: dailyBets[calendar.startOfDay(for: date)],
                             isToday: calendar.isDateInToday(date),
                             isSelected: selectedDate.map { calendar.isDate($0, inSameDayAs: date) } ?? false,
                             action: {
@@ -51,7 +53,7 @@ struct CalendarView: View {
                         )
                     } else {
                         Color.clear
-                            .frame(height: 60)
+                            .frame(height: 70)
                     }
                 }
             }
@@ -92,6 +94,7 @@ struct CalendarView: View {
 struct CalendarDayCell: View {
     let date: Date
     let profit: Decimal?
+    let betAmount: Decimal?
     let isToday: Bool
     let isSelected: Bool
     let action: () -> Void
@@ -118,24 +121,40 @@ struct CalendarDayCell: View {
         }
     }
     
+    private func formatAmount(_ amount: Decimal) -> String {
+        let nsNumber = NSDecimalNumber(decimal: amount)
+        let value = nsNumber.intValue
+        
+        if value >= 10000 {
+            return "\(value / 10000)万"
+        } else if value >= 1000 {
+            return "\(value / 1000)k"
+        } else {
+            return "\(value)"
+        }
+    }
+    
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 Text("\(Calendar.current.component(.day, from: date))")
-                    .font(.system(size: 16, weight: isToday ? .bold : .regular))
+                    .font(.system(size: 14, weight: isToday ? .bold : .regular))
                     .foregroundColor(isToday ? .white : (isSelected ? .primaryColor : .primary))
+                
+                if let betAmount = betAmount {
+                    Text("¥\(formatAmount(betAmount))")
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                }
                 
                 if profit != nil {
                     Text(profitSymbol)
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundColor(profitColor)
-                } else {
-                    Text(" ")
-                        .font(.system(size: 14))
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 60)
+            .frame(height: 70)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(isToday ? Color.primaryColor : (isSelected ? Color.primaryColor.opacity(0.1) : Color.backgroundSecondary))
@@ -156,6 +175,11 @@ struct CalendarDayCell: View {
             Date().addingTimeInterval(-86400 * 2): Decimal(5000),
             Date().addingTimeInterval(-86400): Decimal(-3000),
             Date(): Decimal(10000)
+        ],
+        dailyBets: [
+            Date().addingTimeInterval(-86400 * 2): Decimal(10000),
+            Date().addingTimeInterval(-86400): Decimal(5000),
+            Date(): Decimal(20000)
         ],
         onDateSelected: { _ in }
     )

@@ -9,6 +9,58 @@ struct HomeView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
+                    // 月別カレンダー（収支一覧）
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Button(action: {
+                                viewModel.changeMonth(by: -1)
+                            }) {
+                                Image(systemName: "chevron.left")
+                                    .foregroundColor(.primaryColor)
+                                    .font(.title3)
+                                    .padding(8)
+                            }
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                viewModel.currentMonth = Date()
+                                viewModel.fetchDailyProfitsForMonth()
+                            }) {
+                                Text("今月")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primaryColor)
+                            }
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                viewModel.changeMonth(by: 1)
+                            }) {
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.primaryColor)
+                                    .font(.title3)
+                                    .padding(8)
+                            }
+                        }
+                        .padding(.horizontal)
+                        
+                        CalendarView(
+                            month: viewModel.currentMonth,
+                            dailyProfits: viewModel.dailyProfits,
+                            dailyBets: viewModel.dailyBets,
+                            onDateSelected: { date in
+                                // 日付選択時に記録画面を開く
+                                appState.showAddBetSheet = true
+                            }
+                        )
+                    }
+                    .padding()
+                    .background(Color.backgroundSecondary)
+                    .cornerRadius(16)
+                    .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 4)
+                    
                     // 本日の成績サマリーカード（グラデーションスタイル）
                     DailySummaryCard(stats: viewModel.todayStats)
                     

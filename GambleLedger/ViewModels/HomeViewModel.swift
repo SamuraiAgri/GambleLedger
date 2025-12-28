@@ -10,6 +10,9 @@ class HomeViewModel: ObservableObject {
     @Published var monthlyStats: MonthlyStats = MonthlyStats()
     @Published var recentBets: [BetRecordDisplayModel] = []
     @Published var isLoading: Bool = false
+    @Published var dailyProfits: [Date: Decimal] = [:] // カレンダー用の日別収支
+    @Published var dailyBets: [Date: Decimal] = [:] // カレンダー用の日別賭け金額
+    @Published var currentMonth: Date = Date()
     
     private let coreDataManager: CoreDataManager
     private var cancellables = Set<AnyCancellable>()
@@ -34,6 +37,9 @@ class HomeViewModel: ObservableObject {
         
         // 最近のベット履歴を取得
         fetchRecentBets()
+        
+        // カレンダー用の日別データを取得
+        fetchDailyProfitsForMonth()
     }
     
     private func fetchTodayStats() {
@@ -206,6 +212,50 @@ class HomeViewModel: ObservableObject {
                         // すべてのデータが揃っていれば読み込み完了
                         if hasToday && hasMonthly {
                             self.isLoading = false
+                        }
+                    }
+                    
+                    // カレンダー用の日別収支と賭け金額を取得
+                    func fetchDailyProfitsForMonth() {
+                        let calendar = Calendar.current
+                        guard let monthInterval = calendar.dateInterval(of: .month, for: currentMonth) else {
+                            return
+                        }
+                        
+                        coreDataManager.fetchBetRecords(
+                            startDate: monthInterval.start,
+                            endDate: monthInterval.end
+                        ) { [weak self] records in
+                            guard let self = self else { return }
+                            
+                            var profitsByDay: [Date: Decimal] = [:]
+                            var betsByDay: [Date: Decimal] = [:]
+                            
+                            for record in records {
+                                guard let date = record.value(forKey: "date") as? Date else { continue }
+                                let dayStart = calendar.startOfDay(for: date)
+                                
+                                let betAmount = (record.value(forKey: "betAmount") as? NSDecimalNumber)?.decimalValue ?? 0
+                                let returnAmount = (record.value(forKey: "returnAmount") as? NSDecimalNumber)?.decimalValue ?? 0
+                                let profit = returnAmount - betAmount
+                                
+                                profitsByDay[dayStart, default: 0] += profit
+                                betsByDay[dayStart, default: 0] += betAmount
+                            }
+                            
+                            DispatchQueue.main.async {
+                                self.dailyProfits = profitsByDay
+                                self.dailyBets = betsByDay
+                            }
+                        }
+                    }
+                    
+                    // 月を変更
+                    func changeMonth(by offset: Int) {
+                        let calendar = Calendar.current
+                        if let newMonth = calendar.date(byAdding: .month, value: offset, to: currentMonth) {
+                            currentMonth = newMonth
+                            fetchDailyProfitsForMonth()
                         }
                     }
                 }
