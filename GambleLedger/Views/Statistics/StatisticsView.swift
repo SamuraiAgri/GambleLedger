@@ -252,7 +252,7 @@ struct SimpleGambleTypeStatRow: View {
                         .fontWeight(.bold)
                         .foregroundColor(stat.profit >= 0 ? .accentSuccess : .accentDanger)
                     
-                    Text(String(format: "ROI: %.1f%%", NSDecimalNumber(decimal: stat.roi).doubleValue))
+                    Text(String(format: "ROI: %.1f%%", stat.roi))
                         .font(.caption)
                         .foregroundColor(stat.roi >= 0 ? .accentSuccess : .accentDanger)
                 }
@@ -267,7 +267,7 @@ struct SimpleGambleTypeStatRow: View {
                 
                 StatInfoItem(
                     label: "的中率",
-                    value: String(format: "%.1f%%", Double(truncating: stat.winRate as NSNumber))
+                    value: String(format: "%.1f%%", stat.winRate)
                 )
                 
                 StatInfoItem(
