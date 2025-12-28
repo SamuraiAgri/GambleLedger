@@ -17,6 +17,12 @@ struct StatisticsView: View {
                     TotalStatsCard(stats: viewModel.totalStats)
                         .padding(.horizontal)
                     
+                    // ギャンブル種別ごとの収支分析
+                    if !viewModel.gambleTypeStats.isEmpty {
+                        GambleTypeBreakdownView(stats: viewModel.gambleTypeStats)
+                            .padding(.horizontal)
+                    }
+                    
                     // グラフ部分
                     graphSections
                     

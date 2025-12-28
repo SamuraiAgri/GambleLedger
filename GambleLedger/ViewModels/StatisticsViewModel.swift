@@ -395,7 +395,7 @@ struct GambleTypeStat: Identifiable {
     let totalBet: Decimal
     let totalReturn: Decimal
     let profit: Decimal
-    let roi: Decimal
+    let roi: Double
     let winRate: Double
 }
 
