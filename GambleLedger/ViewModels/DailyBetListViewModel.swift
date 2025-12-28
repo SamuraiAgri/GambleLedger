@@ -36,9 +36,14 @@ class DailyBetListViewModel: ObservableObject {
             // NSManagedObjectをDailyBetRecordに変換
             let models = fetchedRecords.compactMap { record -> DailyBetRecord? in
                 guard let id = record.value(forKey: "id") as? UUID,
-                      let date = record.value(forKey: "date") as? Date,
-                      let gambleTypeName = record.value(forKey: "gambleType") as? String else {
+                      let date = record.value(forKey: "date") as? Date else {
                     return nil
+                }
+                
+                // gambleTypeのリレーションから名前を取得
+                var gambleTypeName = "不明"
+                if let gambleTypeObject = record.value(forKey: "gambleType") as? NSManagedObject {
+                    gambleTypeName = gambleTypeObject.value(forKey: "name") as? String ?? "不明"
                 }
                 
                 let betAmount = (record.value(forKey: "betAmount") as? NSDecimalNumber)?.decimalValue ?? Decimal(0)
