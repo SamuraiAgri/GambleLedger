@@ -209,7 +209,7 @@ struct GambleTypeStatsSection: View {
                 .foregroundColor(.secondaryColor)
             
             ForEach(stats) { stat in
-                GambleTypeStatRow(stat: stat)
+                SimpleGambleTypeStatRow(stat: stat)
                 
                 if stat.id != stats.last?.id {
                     Divider()
@@ -223,8 +223,8 @@ struct GambleTypeStatsSection: View {
     }
 }
 
-// ギャンブル種別統計行
-struct GambleTypeStatRow: View {
+// シンプルなギャンブル種別統計行
+struct SimpleGambleTypeStatRow: View {
     let stat: GambleTypeStat
     
     var body: some View {
