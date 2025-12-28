@@ -155,40 +155,30 @@ struct CalendarDayCell: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 2) {
+            VStack(spacing: 4) {
                 // 日付（固定位置）
                 Text("\(Calendar.current.component(.day, from: date))")
                     .font(.system(size: 14, weight: isToday ? .bold : .regular))
-                    .foregroundColor(isToday ? .white : (isSelected ? .primaryColor : .primary))
+                    .foregroundColor(isToday ? .primary : (isSelected ? .primaryColor : .primary))
                     .frame(height: 16)
                 
-                // 賭け金額（あれば表示）
-                if let betAmount = betAmount, betAmount > 0 {
-                    Text(formatBetAmount(betAmount))
-                        .font(.system(size: 8))
-                        .foregroundColor(.secondary)
-                        .frame(height: 12)
-                } else {
-                    Spacer()
-                        .frame(height: 12)
-                }
-                
-                // 収支（あれば表示）
+                // 収支のみ表示（賭け金額は削除）
                 if let profit = profit {
                     Text(formatProfit(profit))
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.system(size: 10, weight: .bold))
                         .foregroundColor(profitColor)
-                        .frame(height: 14)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 } else {
-                    Spacer()
-                        .frame(height: 14)
+                    Text(" ")
+                        .font(.system(size: 10))
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 70)
+            .frame(height: 60)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isToday ? Color.primaryColor : (isSelected ? Color.primaryColor.opacity(0.1) : Color.backgroundSecondary))
+                    .fill(isToday ? Color.accentSuccess.opacity(0.15) : (isSelected ? Color.primaryColor.opacity(0.1) : Color.backgroundSecondary))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
