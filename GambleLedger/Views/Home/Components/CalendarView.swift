@@ -110,47 +110,78 @@ struct CalendarDayCell: View {
         }
     }
     
-    private var profitSymbol: String {
-        guard let profit = profit else { return "" }
-        if profit > 0 {
-            return "+"
-        } else if profit < 0 {
-            return "-"
-        } else {
-            return "="
-        }
-    }
-    
-    private func formatAmount(_ amount: Decimal) -> String {
+    // 賭け金額のフォーマット
+    private func formatBetAmount(_ amount: Decimal) -> String {
         let nsNumber = NSDecimalNumber(decimal: amount)
         let value = nsNumber.intValue
         
         if value >= 10000 {
-            return "\(value / 10000)万"
+            let man = value / 10000
+            let sen = (value % 10000) / 1000
+            if sen > 0 {
+                return "\(man)万\(sen)千"
+            } else {
+                return "\(man)万"
+            }
         } else if value >= 1000 {
-            return "\(value / 1000)k"
+            return "\(value / 1000)千"
         } else {
             return "\(value)"
+        }
+    }
+    
+    // 収支のフォーマット（+2千円、-1万など）
+    private func formatProfit(_ profit: Decimal) -> String {
+        let nsNumber = NSDecimalNumber(decimal: profit)
+        let value = abs(nsNumber.intValue)
+        let sign = profit > 0 ? "+" : (profit < 0 ? "-" : "")
+        
+        if value >= 10000 {
+            let man = value / 10000
+            let sen = (value % 10000) / 1000
+            if sen > 0 {
+                return "\(sign)\(man)万\(sen)千"
+            } else {
+                return "\(sign)\(man)万"
+            }
+        } else if value >= 1000 {
+            return "\(sign)\(value / 1000)千"
+        } else if value > 0 {
+            return "\(sign)\(value)"
+        } else {
+            return "±0"
         }
     }
     
     var body: some View {
         Button(action: action) {
             VStack(spacing: 2) {
+                // 日付（固定位置）
                 Text("\(Calendar.current.component(.day, from: date))")
                     .font(.system(size: 14, weight: isToday ? .bold : .regular))
                     .foregroundColor(isToday ? .white : (isSelected ? .primaryColor : .primary))
+                    .frame(height: 16)
                 
-                if let betAmount = betAmount {
-                    Text("¥\(formatAmount(betAmount))")
-                        .font(.system(size: 9))
+                // 賭け金額（あれば表示）
+                if let betAmount = betAmount, betAmount > 0 {
+                    Text(formatBetAmount(betAmount))
+                        .font(.system(size: 8))
                         .foregroundColor(.secondary)
+                        .frame(height: 12)
+                } else {
+                    Spacer()
+                        .frame(height: 12)
                 }
                 
-                if profit != nil {
-                    Text(profitSymbol)
-                        .font(.system(size: 12, weight: .bold))
+                // 収支（あれば表示）
+                if let profit = profit {
+                    Text(formatProfit(profit))
+                        .font(.system(size: 9, weight: .bold))
                         .foregroundColor(profitColor)
+                        .frame(height: 14)
+                } else {
+                    Spacer()
+                        .frame(height: 14)
                 }
             }
             .frame(maxWidth: .infinity)

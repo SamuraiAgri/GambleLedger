@@ -4,6 +4,7 @@ import SwiftUI
 struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
     @EnvironmentObject var appState: AppState
+    @State private var selectedCalendarDate: Date?
     
     var body: some View {
         NavigationView {
@@ -52,6 +53,7 @@ struct HomeView: View {
                             dailyBets: viewModel.dailyBets,
                             onDateSelected: { date in
                                 // 日付選択時に記録画面を開く
+                                selectedCalendarDate = date
                                 appState.showAddBetSheet = true
                             }
                         )
@@ -95,7 +97,13 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $appState.showAddBetSheet) {
-                BetRecordModeSelector()
+                BetRecordModeSelector(selectedDate: selectedCalendarDate)
+                    .onDisappear {
+                        // シートが閉じられたら選択日付をクリア
+                        selectedCalendarDate = nil
+                        // データを再読み込み
+                        viewModel.loadData()
+                    }
             }
             .refreshable {
                 viewModel.loadData()

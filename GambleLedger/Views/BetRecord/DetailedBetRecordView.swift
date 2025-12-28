@@ -3,6 +3,7 @@ import SwiftUI
 
 /// 詳細記録モード - すべての情報を入力可能
 struct DetailedBetRecordView: View {
+    let initialDate: Date?
     @StateObject private var viewModel = BetRecordViewModel()
     @Environment(\.dismiss) private var dismiss
     
@@ -11,6 +12,10 @@ struct DetailedBetRecordView: View {
     
     enum Field {
         case eventName, bettingSystem, betAmount, returnAmount, memo
+    }
+    
+    init(initialDate: Date? = nil) {
+        self.initialDate = initialDate
     }
     
     var body: some View {
@@ -221,6 +226,12 @@ struct DetailedBetRecordView: View {
                         viewModel.showBettingSystemPicker = false
                     }
                 )
+            }
+            .onAppear {
+                // カレンダーから選択された日付を設定
+                if let initialDate = initialDate {
+                    viewModel.selectedDate = initialDate
+                }
             }
         }
     }

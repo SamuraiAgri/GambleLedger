@@ -3,6 +3,7 @@ import SwiftUI
 
 /// 簡易記録モード - 最小限の入力で素早く記録
 struct SimpleBetRecordView: View {
+    let initialDate: Date?
     @StateObject private var viewModel = BetRecordViewModel()
     @Environment(\.dismiss) private var dismiss
     @FocusState private var focusedField: Field?
@@ -11,10 +12,29 @@ struct SimpleBetRecordView: View {
         case betAmount, returnAmount
     }
     
+    init(initialDate: Date? = nil) {
+        self.initialDate = initialDate
+    }
+    
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
+                    // 日付選択
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("日付")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                        
+                        DatePicker("", selection: $viewModel.selectedDate, displayedComponents: [.date, .hourAndMinute])
+                            .datePickerStyle(.compact)
+                            .labelsHidden()
+                            .padding()
+                            .background(Color.backgroundSecondary)
+                            .cornerRadius(12)
+                    }
+                    .padding(.horizontal)
+                    
                     // ギャンブル種別選択
                     VStack(alignment: .leading, spacing: 12) {
                         Text("ギャンブル種別")
@@ -201,6 +221,12 @@ struct SimpleBetRecordView: View {
                     }
                     .transition(.move(edge: .bottom))
                     .animation(.spring(), value: viewModel.showSuccessMessage)
+                }
+            }
+            .onAppear {
+                // カレンダーから選択された日付を設定
+                if let initialDate = initialDate {
+                    viewModel.selectedDate = initialDate
                 }
             }
         }

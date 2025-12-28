@@ -3,8 +3,13 @@ import SwiftUI
 
 /// 記録モード選択画面 - 簡易/詳細を選択
 struct BetRecordModeSelector: View {
+    let selectedDate: Date?
     @State private var showSimpleMode = false
     @State private var showDetailedMode = false
+    
+    init(selectedDate: Date? = nil) {
+        self.selectedDate = selectedDate
+    }
     
     var body: some View {
         NavigationView {
@@ -52,10 +57,10 @@ struct BetRecordModeSelector: View {
             .navigationTitle("ベット記録")
             .navigationBarTitleDisplayMode(.large)
             .fullScreenCover(isPresented: $showSimpleMode) {
-                SimpleBetRecordView()
+                SimpleBetRecordView(initialDate: selectedDate)
             }
             .fullScreenCover(isPresented: $showDetailedMode) {
-                DetailedBetRecordView()
+                DetailedBetRecordView(initialDate: selectedDate)
             }
         }
     }
