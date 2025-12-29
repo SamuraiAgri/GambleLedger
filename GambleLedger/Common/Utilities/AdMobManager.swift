@@ -116,7 +116,7 @@ class AdMobManager: NSObject, ObservableObject {
     /// インタースティシャル広告を表示
     private func showInterstitialAd() {
         guard let interstitialAd = interstitialAd,
-              let rootViewController = UIApplication.shared.windows.first?.rootViewController else {
+              let rootViewController = getRootViewController() else {
             print("⚠️ Interstitial ad not ready or no root view controller")
             loadInterstitialAd() // 次回のためにリロード
             return
@@ -124,23 +124,35 @@ class AdMobManager: NSObject, ObservableObject {
         
         interstitialAd.present(fromRootViewController: rootViewController)
     }
+    
+    // iOS 15以降対応のrootViewController取得
+    private func getRootViewController() -> UIViewController? {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
+            return nil
+        }
+        return scene.windows.first?.rootViewController
+    }
 }
 
 // MARK: - GADFullScreenContentDelegate
 extension AdMobManager: GADFullScreenContentDelegate {
-    func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
-        print("✅ Interstitial ad dismissed")
-        // 次の広告をプリロード
-        loadInterstitialAd()
+    nonisolated func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+        Task { @MainActor in
+            print("✅ Interstitial ad dismissed")
+            // 次の広告をプリロード
+            loadInterstitialAd()
+        }
     }
     
-    func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
-        print("❌ Interstitial ad failed to present: \(error.localizedDescription)")
-        // 次の広告をプリロード
-        loadInterstitialAd()
+    nonisolated func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
+        Task { @MainActor in
+            print("❌ Interstitial ad failed to present: \(error.localizedDescription)")
+            // 次の広告をプリロード
+            loadInterstitialAd()
+        }
     }
     
-    func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+    nonisolated func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
         print("📢 Interstitial ad will present")
     }
 }

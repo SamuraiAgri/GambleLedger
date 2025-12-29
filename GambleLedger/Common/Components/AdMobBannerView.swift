@@ -18,7 +18,7 @@ struct AdMobBannerView: UIViewRepresentable {
     func makeUIView(context: Context) -> GADBannerView {
         let banner = GADBannerView(adSize: adSize)
         banner.adUnitID = adUnitID
-        banner.rootViewController = UIApplication.shared.windows.first?.rootViewController
+        banner.rootViewController = getRootViewController()
         banner.load(GADRequest())
         banner.delegate = context.coordinator
         return banner
@@ -26,6 +26,14 @@ struct AdMobBannerView: UIViewRepresentable {
     
     func updateUIView(_ uiView: GADBannerView, context: Context) {
         // 必要に応じて更新
+    }
+    
+    // iOS 15以降対応のrootViewController取得
+    private func getRootViewController() -> UIViewController? {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
+            return nil
+        }
+        return scene.windows.first?.rootViewController
     }
     
     func makeCoordinator() -> Coordinator {
