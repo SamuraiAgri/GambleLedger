@@ -81,7 +81,7 @@ struct HomeView: View {
             BannerAdContainer()
             }
             .background(Color.backgroundPrimary.edgesIgnoringSafeArea(.all))
-            .navigationTitle("GambleLedger")
+            .navigationTitle("収支管理")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
