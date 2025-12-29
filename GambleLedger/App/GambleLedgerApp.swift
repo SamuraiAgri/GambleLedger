@@ -1,5 +1,6 @@
 // GambleLedger/App/GambleLedgerApp.swift
 import SwiftUI
+import GoogleMobileAds
 
 @main
 struct GambleLedgerApp: App {

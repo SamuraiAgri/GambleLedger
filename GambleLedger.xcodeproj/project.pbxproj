@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		21F962222F02A728000E94F4 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 21F962212F02A728000E94F4 /* GoogleMobileAds */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		218BA4642DBBAA8F00419B94 /* GambleLedger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GambleLedger.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				21F962222F02A728000E94F4 /* GoogleMobileAds in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = GambleLedger;
 			packageProductDependencies = (
+				21F962212F02A728000E94F4 /* GoogleMobileAds */,
 			);
 			productName = GambleLedger;
 			productReference = 218BA4642DBBAA8F00419B94 /* GambleLedger.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = 218BA45B2DBBAA8F00419B94;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				21F962202F02A728000E94F4 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 218BA4652DBBAA8F00419B94 /* Products */;
 			projectDirPath = "";
@@ -326,6 +335,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		21F962202F02A728000E94F4 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		21F962212F02A728000E94F4 /* GoogleMobileAds */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 21F962202F02A728000E94F4 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 218BA45C2DBBAA8F00419B94 /* Project object */;
 }

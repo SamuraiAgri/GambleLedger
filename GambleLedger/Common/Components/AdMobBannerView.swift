@@ -1,20 +1,45 @@
 // GambleLedger/Common/Components/AdMobBannerView.swift
+// ⚠️ このファイルはAdMob SDKインストール後に使用する実装版です
+// ⚠️ SDKインストール後、AdMobBannerView.swiftをこのファイルの内容で置き換えてください
+
 import SwiftUI
-import UIKit
+import GoogleMobileAds
 
-// TODO: AdMob SDKをインストール後、このファイルを置き換えてください
-// 現在はスタブ実装（広告は表示されません）
-
-/// バナー広告のSwiftUIラッパー（スタブ版）
-struct AdMobBannerView: View {
-    var body: some View {
-        Rectangle()
-            .fill(Color.gray.opacity(0.2))
-            .overlay(
-                Text("AdMob Banner (Not Loaded)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            )
+/// バナー広告のSwiftUIラッパー
+struct AdMobBannerView: UIViewRepresentable {
+    let adUnitID: String
+    let adSize: GADAdSize
+    
+    init(adSize: GADAdSize = GADAdSizeBanner) {
+        self.adUnitID = AdMobManager.shared.getBannerAdUnitID()
+        self.adSize = adSize
+    }
+    
+    func makeUIView(context: Context) -> GADBannerView {
+        let banner = GADBannerView(adSize: adSize)
+        banner.adUnitID = adUnitID
+        banner.rootViewController = UIApplication.shared.windows.first?.rootViewController
+        banner.load(GADRequest())
+        banner.delegate = context.coordinator
+        return banner
+    }
+    
+    func updateUIView(_ uiView: GADBannerView, context: Context) {
+        // 必要に応じて更新
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+    
+    class Coordinator: NSObject, GADBannerViewDelegate {
+        func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
+            print("✅ Banner ad loaded successfully")
+        }
+        
+        func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
+            print("❌ Banner ad failed to load: \(error.localizedDescription)")
+        }
     }
 }
 
