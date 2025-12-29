@@ -257,6 +257,7 @@ struct DetailedBetRecordView: View {
                     viewModel.loadGambleTypes()
                 }
             }
+            } // else ブロックの閉じ括弧
         }
     }
     
