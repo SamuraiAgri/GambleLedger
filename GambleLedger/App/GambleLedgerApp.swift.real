@@ -1,5 +1,9 @@
 // GambleLedger/App/GambleLedgerApp.swift
+// ⚠️ このファイルはAdMob SDKインストール後に使用する実装版です
+// ⚠️ SDKインストール後、GambleLedgerApp.swiftのimport文を以下のように変更してください
+
 import SwiftUI
+import GoogleMobileAds  // ← この行を追加
 
 @main
 struct GambleLedgerApp: App {
@@ -8,7 +12,7 @@ struct GambleLedgerApp: App {
     @StateObject private var errorHandler = ErrorHandler.shared
     
     init() {
-        // AdMobの初期化（スタブ版）
+        // AdMobの初期化
         AdMobManager.shared.initialize()
     }
     
@@ -26,7 +30,7 @@ struct GambleLedgerApp: App {
                     appState.loadGambleTypes()
                     setupAppearance()
                     
-                    // アプリ起動時のインタースティシャル広告（スタブ版）
+                    // アプリ起動時のインタースティシャル広告（1日1回）
                     AdMobManager.shared.showInterstitialOnAppLaunch()
                 }
         }
