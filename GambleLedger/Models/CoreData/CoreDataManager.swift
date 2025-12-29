@@ -76,7 +76,7 @@ class CoreDataManager {
     
     func fetchGambleTypes(completion: @escaping ([NSManagedObject]) -> Void) {
         let request = NSFetchRequest<NSManagedObject>(entityName: "GambleType")
-        request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
+        // ソートを削除して、挿入順を保持
         
         // 改善したフェッチ実行
         executeAsyncFetch(request, completion: completion)
@@ -456,6 +456,34 @@ class CoreDataManager {
                 print("Failed to save gamble type: \(error)")
                 
                 // エラー時にロールバック
+                context.rollback()
+                
+                DispatchQueue.main.async {
+                    completion(false)
+                }
+            }
+        }
+    }
+    
+    // MARK: - ギャンブル種別の全削除（リセット用）
+    func deleteAllGambleTypes(completion: @escaping (Bool) -> Void) {
+        let context = createBackgroundContext()
+        let request = NSFetchRequest<NSManagedObject>(entityName: "GambleType")
+        
+        context.perform {
+            do {
+                let results = try context.fetch(request)
+                for object in results {
+                    context.delete(object)
+                }
+                
+                try context.save()
+                
+                DispatchQueue.main.async {
+                    completion(true)
+                }
+            } catch {
+                print("Failed to delete all gamble types: \(error)")
                 context.rollback()
                 
                 DispatchQueue.main.async {

@@ -30,19 +30,19 @@ struct GambleTypeModel: Identifiable {
     // デフォルトのギャンブル種別一覧
     static func defaultTypes() -> [GambleTypeModel] {
         return [
-            // パチンコ
-            GambleTypeModel(
-                id: Constants.GambleTypes.pachinko.id,
-                name: Constants.GambleTypes.pachinko.name,
-                icon: Constants.GambleTypes.pachinko.icon,
-                color: Color(hex: Constants.GambleTypes.pachinko.color)
-            ),
             // 競馬
             GambleTypeModel(
                 id: Constants.GambleTypes.horse.id,
                 name: Constants.GambleTypes.horse.name,
                 icon: Constants.GambleTypes.horse.icon,
                 color: Color(hex: Constants.GambleTypes.horse.color)
+            ),
+            // パチンコ
+            GambleTypeModel(
+                id: Constants.GambleTypes.pachinko.id,
+                name: Constants.GambleTypes.pachinko.name,
+                icon: Constants.GambleTypes.pachinko.icon,
+                color: Color(hex: Constants.GambleTypes.pachinko.color)
             ),
             // 競艇
             GambleTypeModel(

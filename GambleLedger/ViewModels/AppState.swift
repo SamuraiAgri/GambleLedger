@@ -22,6 +22,9 @@ class AppState: ObservableObject {
         
         // アプリ設定の復元
         restoreAppSettings()
+        
+        // ギャンブル種別の順序をリセット（一度だけ実行）
+        resetGambleTypesIfNeeded()
     }
     
     deinit {
@@ -53,6 +56,26 @@ class AppState: ObservableObject {
     func saveThemeSettings() {
         UserDefaults.standard.set(isDarkMode, forKey: "isDarkMode")
         UserDefaults.standard.set(useSystemTheme, forKey: "useSystemTheme")
+    }
+    
+    // ギャンブル種別の順序をリセット（一度だけ実行）
+    private func resetGambleTypesIfNeeded() {
+        let hasResetKey = "hasResetGambleTypesOrder_v2"
+        
+        if !UserDefaults.standard.bool(forKey: hasResetKey) {
+            // 既存のGambleTypeを全削除
+            coreDataManager.deleteAllGambleTypes { [weak self] success in
+                if success {
+                    print("GambleTypes reset successfully")
+                    UserDefaults.standard.set(true, forKey: hasResetKey)
+                    
+                    // 新しい順序で再読み込み
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        self?.loadGambleTypes()
+                    }
+                }
+            }
+        }
     }
     
     // ギャンブル種別をデータベースに保存
@@ -96,8 +119,7 @@ class AppState: ObservableObject {
             }
             
             DispatchQueue.main.async {
-                // 記録画面では逆順で表示（その他 → スポーツ → 競輪 → 競艇 → 競馬 → パチンコ）
-                self.gambleTypes = loadedTypes.reversed()
+                self.gambleTypes = loadedTypes
             }
         }
     }
