@@ -7,39 +7,43 @@ struct BudgetView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // 現在の予算カード
-                    if let currentBudget = viewModel.currentBudget {
-                        CurrentBudgetCard(budget: currentBudget)
-                    } else {
-                        NoBudgetView(action: { showingAddBudgetSheet = true })
-                    }
-                    
-                    // 予算使用状況グラフ
-                    if let currentBudget = viewModel.currentBudget {
-                        BudgetUsageCard(
-                            totalAmount: currentBudget.totalAmount,
-                            usedAmount: currentBudget.usedAmount,
-                            period: currentBudget.period
-                        )
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // 現在の予算カード
+                        if let currentBudget = viewModel.currentBudget {
+                            CurrentBudgetCard(budget: currentBudget)
+                        } else {
+                            NoBudgetView(action: { showingAddBudgetSheet = true })
+                        }
                         
-                        // 詳細統計カード
-                        BudgetInsightsCard(
-                            dailyAverage: viewModel.dailyAverageLoss,
-                            projectedLoss: viewModel.projectedMonthlyLoss,
-                            daysRemaining: viewModel.daysRemaining,
-                            recommendedDaily: viewModel.recommendedDailyLimit,
-                            budgetAmount: currentBudget.totalAmount
-                        )
+                        // 予算使用状況グラフ
+                        if let currentBudget = viewModel.currentBudget {
+                            BudgetUsageCard(
+                                totalAmount: currentBudget.totalAmount,
+                                usedAmount: currentBudget.usedAmount,
+                                period: currentBudget.period
+                            )
+                            
+                            // 詳細統計カード
+                            BudgetInsightsCard(
+                                dailyAverage: viewModel.dailyAverageLoss,
+                                projectedLoss: viewModel.projectedMonthlyLoss,
+                                daysRemaining: viewModel.daysRemaining,
+                                recommendedDaily: viewModel.recommendedDailyLimit,
+                                budgetAmount: currentBudget.totalAmount
+                            )
+                        }
+                        
+                        // ギャンブル種別別予算（あれば表示）
+                        if !viewModel.gambleTypeBudgets.isEmpty {
+                            GambleTypeBudgetsCard(budgets: viewModel.gambleTypeBudgets)
+                        }
                     }
-                    
-                    // ギャンブル種別別予算（あれば表示）
-                    if !viewModel.gambleTypeBudgets.isEmpty {
-                        GambleTypeBudgetsCard(budgets: viewModel.gambleTypeBudgets)
-                    }
+                    .padding()
                 }
-                .padding()
+                
+                BannerAdContainer()
             }
             .background(Color.backgroundPrimary.edgesIgnoringSafeArea(.all))
             .navigationTitle("予算管理")

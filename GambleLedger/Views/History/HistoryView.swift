@@ -69,6 +69,9 @@ struct HistoryView: View {
                         }
                     )
                 }
+                
+                // バナー広告（履歴画面下部）
+                BannerAdContainer()
             }
             .background(Color.backgroundPrimary.edgesIgnoringSafeArea(.all))
             .navigationTitle("ベット履歴")

@@ -273,6 +273,8 @@ struct DetailedBetRecordView: View {
         // 保存成功したら1.5秒後に閉じる
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             if viewModel.showSuccessMessage {
+                // インタースティシャル広告を表示
+                AdMobManager.shared.showInterstitialOnRecordSave()
                 dismiss()
             }
         }

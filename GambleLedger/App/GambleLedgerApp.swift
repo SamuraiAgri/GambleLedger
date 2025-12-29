@@ -1,11 +1,17 @@
 // GambleLedger/App/GambleLedgerApp.swift
 import SwiftUI
+import GoogleMobileAds
 
 @main
 struct GambleLedgerApp: App {
     let persistenceController = PersistenceController.shared
     @StateObject private var appState = AppState()
     @StateObject private var errorHandler = ErrorHandler.shared
+    
+    init() {
+        // AdMobの初期化
+        AdMobManager.shared.initialize()
+    }
     
     var body: some Scene {
         WindowGroup {
@@ -20,6 +26,10 @@ struct GambleLedgerApp: App {
                     // アプリ起動時の処理
                     appState.loadGambleTypes()
                     setupAppearance()
+                    
+                    // アプリ起動時のインタースティシャル広告（1日1回）
+                    AdMobManager.shared.showInterstitialOnAppLaunch()
+                }
                 }
         }
     }

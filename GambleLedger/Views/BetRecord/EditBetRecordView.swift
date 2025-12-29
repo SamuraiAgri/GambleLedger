@@ -174,6 +174,8 @@ struct EditBetRecordView: View {
                         focusedField = nil
                         viewModel.updateBetRecord { success in
                             if success {
+                                // インタースティシャル広告を表示
+                                AdMobManager.shared.showInterstitialOnRecordSave()
                                 dismiss()
                             }
                         }

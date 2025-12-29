@@ -9,10 +9,11 @@ struct HomeView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // 月別カレンダー（収支一覧）
-                    VStack(alignment: .leading, spacing: 12) {
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // 月別カレンダー（収支一覧）
+                        VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Button(action: {
                                 viewModel.changeMonth(by: -1)
@@ -74,6 +75,10 @@ struct HomeView: View {
                     RecentBetsSection(bets: viewModel.recentBets)
                 }
                 .padding()
+            }
+            
+            // バナー広告（ホーム画面下部）
+            BannerAdContainer()
             }
             .background(Color.backgroundPrimary.edgesIgnoringSafeArea(.all))
             .navigationTitle("GambleLedger")

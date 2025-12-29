@@ -8,10 +8,11 @@ struct StatisticsView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // 期間選択セグメント
-                    periodSelector
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // 期間選択セグメント
+                        periodSelector
                     
                     // 全体統計サマリー
                     TotalStatsCard(stats: viewModel.totalStats)
@@ -37,6 +38,10 @@ struct StatisticsView: View {
                         .padding(.horizontal)
                 }
                 .padding(.vertical)
+            }
+            
+            // バナー広告（統計タブ下部）
+            BannerAdContainer()
             }
             .background(Color.backgroundPrimary.edgesIgnoringSafeArea(.all))
             .navigationTitle("統計")
