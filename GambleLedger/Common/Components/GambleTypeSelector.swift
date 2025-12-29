@@ -52,11 +52,6 @@ struct GambleTypeSelectorButton: View {
     let isSelected: Bool
     let action: () -> Void
     
-    // アイコンが絵文字かどうかを判定
-    private var isEmoji: Bool {
-        gambleType.icon.unicodeScalars.first?.properties.isEmoji ?? false
-    }
-    
     var body: some View {
         Button(action: action) {
             VStack {
@@ -65,18 +60,11 @@ struct GambleTypeSelectorButton: View {
                         .fill(isSelected ? gambleType.color : Color.gray.opacity(0.2))
                         .frame(width: 60, height: 60)
                     
-                    if isEmoji {
-                        // 絵文字の場合
-                        Text(gambleType.icon)
-                            .font(.system(size: 30))
-                    } else {
-                        // SF Symbolsの場合
-                        Image(systemName: gambleType.icon)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 30, height: 30)
-                            .foregroundColor(isSelected ? .white : .gray)
-                    }
+                    Image(systemName: gambleType.icon)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 30, height: 30)
+                        .foregroundColor(isSelected ? .white : .gray)
                 }
                 
                 Text(gambleType.name)

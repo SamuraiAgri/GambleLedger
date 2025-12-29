@@ -7,7 +7,7 @@ struct Constants {
         static let pachinko = GambleTypeDefinition(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
             name: "パチンコ",
-            icon: "🎰",
+            icon: "dollarsign.circle.fill",
             color: "#FFC107"
         )
         
@@ -15,7 +15,7 @@ struct Constants {
         static let horse = GambleTypeDefinition(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
             name: "競馬",
-            icon: "🏇",
+            icon: "hare.fill",
             color: "#D32F2F"
         )
         
@@ -23,7 +23,7 @@ struct Constants {
         static let boat = GambleTypeDefinition(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!,
             name: "競艇",
-            icon: "🚤",
+            icon: "sailboat.fill",
             color: "#039BE5"
         )
         
@@ -31,7 +31,7 @@ struct Constants {
         static let bike = GambleTypeDefinition(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000004")!,
             name: "競輪",
-            icon: "🚴",
+            icon: "bicycle.circle.fill",
             color: "#8E24AA"
         )
         
@@ -39,7 +39,7 @@ struct Constants {
         static let sports = GambleTypeDefinition(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000005")!,
             name: "スポーツ",
-            icon: "⚽️",
+            icon: "sportscourt.fill",
             color: "#7B1FA2"
         )
         
@@ -47,7 +47,7 @@ struct Constants {
         static let other = GambleTypeDefinition(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000006")!,
             name: "その他",
-            icon: "🎲",
+            icon: "dice.fill",
             color: "#78909C"
         )
     }
