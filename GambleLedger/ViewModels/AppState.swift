@@ -96,7 +96,8 @@ class AppState: ObservableObject {
             }
             
             DispatchQueue.main.async {
-                self.gambleTypes = loadedTypes
+                // 記録画面では逆順で表示（その他 → スポーツ → 競輪 → 競艇 → 競馬 → パチンコ）
+                self.gambleTypes = loadedTypes.reversed()
             }
         }
     }
