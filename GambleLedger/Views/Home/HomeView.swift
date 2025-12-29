@@ -237,7 +237,7 @@ struct MonthlySummaryCard: View {
                 
                 Text(Date().formattedString(format: "yyyy年MM月"))
                     .font(.subheadline)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
             }
             
             HStack {
@@ -300,7 +300,7 @@ struct MonthlySummaryCard: View {
                     let usagePercent = Double(truncating: (stats.totalBet / stats.budgetTotal * 100) as NSNumber)
                     Text("\(Int(usagePercent))% 使用済み")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity, alignment: .trailing)
                 }
             }
@@ -352,7 +352,7 @@ struct StatsValueItem: View {
                 
                 Text(title)
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
             }
             
             Text(value)
@@ -436,7 +436,7 @@ struct RecentBetRow: View {
                 
                 Text("\(bet.gambleType) | \(bet.bettingSystem)")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
                     .lineLimit(1)
             }
             
@@ -451,7 +451,7 @@ struct RecentBetRow: View {
                 
                 Text(bet.date.timeAgoDisplay())
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
             }
         }
         .padding(.vertical, 6)
@@ -492,7 +492,7 @@ struct EmptyBetsView: View {
             
             Text("ベット記録を追加すると、ここに表示されます")
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
         }

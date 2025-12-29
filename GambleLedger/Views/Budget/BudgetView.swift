@@ -84,14 +84,14 @@ struct CurrentBudgetCard: View {
                 
                 Text(budget.period)
                     .font(.subheadline)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
             }
             
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("予算総額")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                     
                     Text(budget.formattedTotalAmount)
                         .font(.title2)
@@ -104,7 +104,7 @@ struct CurrentBudgetCard: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("使用済み")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                     
                     Text(budget.formattedUsedAmount)
                         .font(.title2)
@@ -201,7 +201,7 @@ struct BudgetUsageCard: View {
                         
                         Text("使用済み")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                     }
                 }
                 
@@ -243,7 +243,7 @@ struct BudgetUsageCard: View {
             
             Text("期間: \(period)")
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding()
@@ -348,13 +348,13 @@ struct GambleTypeBudgetsCard: View {
                     HStack {
                         Text("残額: \(budget.formattedRemainingAmount)")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                         
                         Spacer()
                         
                         Text("予算: \(budget.formattedTotalAmount)")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                     }
                 }
                 .padding(.vertical, 8)
@@ -397,7 +397,7 @@ struct NoBudgetView: View {
             
             Text("月別予算を設定して、効果的な資金管理を始めましょう。予算設定はギャンブルを健全に楽しむための第一歩です。")
                 .font(.subheadline)
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 16)
             
@@ -458,7 +458,7 @@ struct AddBudgetSheetView: View {
                             .focused($focusedField)
                         
                         Text("円")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                     }
                 }
                 

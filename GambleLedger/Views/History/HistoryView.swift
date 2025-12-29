@@ -147,7 +147,7 @@ struct SearchFilterBar: View {
                         }
                     }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                     }
                 }
             }
@@ -169,7 +169,7 @@ struct SearchFilterBar: View {
                     
                     Image(systemName: showDatePicker ? "chevron.up" : "chevron.down")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                 }
                 .padding(10)
                 .background(
@@ -215,7 +215,7 @@ struct FilterOptionsView: View {
                             .foregroundColor(.primary)
                         Image(systemName: "chevron.down")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                     }
                     .font(.subheadline)
                     .padding(8)
@@ -266,7 +266,7 @@ struct FilterOptionsView: View {
                             .foregroundColor(.primary)
                         Image(systemName: "chevron.down")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                     }
                     .font(.subheadline)
                     .padding(8)
@@ -446,7 +446,7 @@ struct BetHistoryCell: View {
                 // 日付
                 Text(record.formattedDate)
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
             }
             
             HStack(alignment: .top) {
@@ -458,7 +458,7 @@ struct BetHistoryCell: View {
                     
                     Text(record.bettingSystem)
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                 }
                 
                 Spacer()
@@ -491,13 +491,13 @@ struct BetHistoryCell: View {
             HStack {
                 Text("賭け金: \(record.formattedBetAmount)")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
                 
                 Spacer()
                 
                 Text("払戻: \(record.formattedReturnAmount)")
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
                 
                 Text("ROI: \(record.formattedROI)")
                     .font(.caption)
@@ -536,7 +536,7 @@ struct EmptyHistoryView: View {
             
             Text("ベット記録を追加すると、ここに履歴が表示されます")
                 .font(.body)
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
                 .padding(.bottom, 16)

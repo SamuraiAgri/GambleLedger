@@ -71,7 +71,7 @@ struct StatsCard: View {
                 
                 Text(data.title)
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
                 
                 Spacer()
             }
@@ -79,6 +79,7 @@ struct StatsCard: View {
             Text(data.value)
                 .font(.title3)
                 .fontWeight(.bold)
+                .foregroundColor(.primary)
             
             if let trendValue = data.trendValue {
                 HStack {

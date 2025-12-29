@@ -289,10 +289,11 @@ struct StatInfoItem: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary)
             
             Text(value)
                 .font(.subheadline)
+                .foregroundColor(.primary)
         }
     }
 }

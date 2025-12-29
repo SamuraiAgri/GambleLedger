@@ -303,7 +303,7 @@ private struct DetailedBettingSystemPickerView: View {
                             
                             Text(system.description)
                                 .font(.caption)
-                                .foregroundColor(.gray)
+                                .foregroundColor(.secondary)
                         }
                         .padding(.vertical, 4)
                     }
