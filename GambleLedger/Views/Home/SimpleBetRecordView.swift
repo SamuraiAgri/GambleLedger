@@ -18,7 +18,27 @@ struct SimpleBetRecordView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
+            if viewModel.isLoading && viewModel.gambleTypes.isEmpty {
+                // データロード中
+                VStack {
+                    ProgressView("読み込み中...")
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .scaleEffect(1.5)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.backgroundPrimary)
+                .navigationTitle("簡易記録")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("キャンセル") {
+                            dismiss()
+                        }
+                    }
+                }
+            } else {
+                // データロード完了
+                ScrollView {
                 VStack(spacing: 24) {
                     // 日付選択
                     VStack(alignment: .leading, spacing: 12) {
@@ -227,6 +247,10 @@ struct SimpleBetRecordView: View {
                 // カレンダーから選択された日付を設定
                 if let initialDate = initialDate {
                     viewModel.selectedDate = initialDate
+                }
+                // データがまだロードされていない場合は再ロード
+                if viewModel.gambleTypes.isEmpty {
+                    viewModel.loadGambleTypes()
                 }
             }
         }

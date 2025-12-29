@@ -20,7 +20,27 @@ struct DetailedBetRecordView: View {
     
     var body: some View {
         NavigationView {
-            Form {
+            if viewModel.isLoading && viewModel.gambleTypes.isEmpty {
+                // データロード中
+                VStack {
+                    ProgressView("読み込み中...")
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .scaleEffect(1.5)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.backgroundPrimary)
+                .navigationTitle("詳細記録")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("キャンセル") {
+                            dismiss()
+                        }
+                    }
+                }
+            } else {
+                // データロード完了
+                Form {
                 // 日時選択セクション
                 Section(header: Text("日時")) {
                     DatePicker("", selection: $viewModel.selectedDate, displayedComponents: [.date, .hourAndMinute])
@@ -231,6 +251,10 @@ struct DetailedBetRecordView: View {
                 // カレンダーから選択された日付を設定
                 if let initialDate = initialDate {
                     viewModel.selectedDate = initialDate
+                }
+                // データがまだロードされていない場合は再ロード
+                if viewModel.gambleTypes.isEmpty {
+                    viewModel.loadGambleTypes()
                 }
             }
         }
