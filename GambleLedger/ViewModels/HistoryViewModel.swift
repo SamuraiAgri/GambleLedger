@@ -221,6 +221,38 @@ class HistoryViewModel: ObservableObject {
         return recordModelsCache[id]
     }
     
+    // 非同期でレコードを取得（編集用）
+    func loadBetRecordForEdit(id: String, completion: @escaping (BetRecordModel?) -> Void) async {
+        // まずキャッシュを確認
+        if let cached = recordModelsCache[id] {
+            DispatchQueue.main.async {
+                completion(cached)
+            }
+            return
+        }
+        
+        // キャッシュにない場合はCoreDataから取得
+        guard let uuid = UUID(uuidString: id) else {
+            DispatchQueue.main.async {
+                completion(nil)
+            }
+            return
+        }
+        
+        coreDataManager.fetchBetRecord(id: uuid) { record in
+            if let record = record {
+                let betRecord = BetRecordModel.fromManagedObject(record)
+                DispatchQueue.main.async {
+                    completion(betRecord)
+                }
+            } else {
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+            }
+        }
+    }
+    
     // 触覚フィードバック
     private func provideHapticFeedback(type: UINotificationFeedbackGenerator.FeedbackType) {
         let generator = UINotificationFeedbackGenerator()

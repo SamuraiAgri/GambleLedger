@@ -8,9 +8,7 @@ struct HistoryView: View {
     @State private var recordToDelete: String?
     @State private var showEditView = false
     @State private var recordToEdit: BetRecordModel?
-    @State private var showExportMenu = false
-    @State private var exportToCSV = false
-    @State private var exportToJSON = false
+    @State private var recordToEditId: String?
     @EnvironmentObject private var errorHandler: ErrorHandler
     
     var body: some View {
@@ -60,9 +58,13 @@ struct HistoryView: View {
                             showDeleteAlert = true
                         },
                         onEdit: { id in
-                            if let record = viewModel.getBetRecordModel(id: id) {
-                                recordToEdit = record
-                                showEditView = true
+                            recordToEditId = id
+                            // 非同期でレコードを取得
+                            Task {
+                                await viewModel.loadBetRecordForEdit(id: id) { record in
+                                    recordToEdit = record
+                                    showEditView = true
+                                }
                             }
                         }
                     )
@@ -72,39 +74,15 @@ struct HistoryView: View {
             .navigationTitle("ベット履歴")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack(spacing: 16) {
-                        // エクスポートボタン
-                        if !viewModel.filteredRecords.isEmpty {
-                            Menu {
-                                Button(action: {
-                                    exportToCSV = true
-                                }) {
-                                    Label("CSVでエクスポート", systemImage: "doc.text")
-                                }
-                                
-                                Button(action: {
-                                    exportToJSON = true
-                                }) {
-                                    Label("JSONでエクスポート", systemImage: "doc.badge.gearshape")
-                                }
-                            } label: {
-                                Image(systemName: "square.and.arrow.up")
-                                    .foregroundColor(.secondaryColor)
-                            }
-                            .accessibilityLabel("データをエクスポート")
+                    Button(action: {
+                        withAnimation {
+                            viewModel.loadBetRecords()
                         }
-                        
-                        // リフレッシュボタン
-                        Button(action: {
-                            withAnimation {
-                                viewModel.loadBetRecords()
-                            }
-                        }) {
-                            Image(systemName: "arrow.clockwise")
-                                .foregroundColor(.primaryColor)
-                        }
-                        .accessibilityLabel("データを再読み込み")
+                    }) {
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundColor(.primaryColor)
                     }
+                    .accessibilityLabel("データを再読み込み")
                 }
             }
             .alert(isPresented: $showDeleteAlert) {
@@ -130,13 +108,13 @@ struct HistoryView: View {
                 if let record = recordToEdit {
                     EditBetRecordView(viewModel: EditBetRecordViewModel(record: record))
                         .onDisappear {
+                            recordToEdit = nil
+                            recordToEditId = nil
                             // 編集後にデータを再読み込み
                             viewModel.loadBetRecords()
                         }
                 }
             }
-            .exportData(isPresented: $exportToCSV, records: viewModel.filteredRecords, format: .csv)
-            .exportData(isPresented: $exportToJSON, records: viewModel.filteredRecords, format: .json)
         }
         .withErrorHandling()
     }
