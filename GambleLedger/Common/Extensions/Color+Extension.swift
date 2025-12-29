@@ -11,10 +11,10 @@ extension Color {
     static let accentWarning = Color(hex: "#FF9800") // 警告用
     static let accentDanger = Color(hex: "#D32F2F") // 失敗/損失表示用
     
-    // 背景カラー
-    static let backgroundPrimary = Color(hex: "#F5F5F5") // メイン背景
-    static let backgroundSecondary = Color(hex: "#FFFFFF") // カード背景
-    static let backgroundTertiary = Color(hex: "#EEEEEE") // 区切り背景
+    // 背景カラー（ダークモード対応）
+    static let backgroundPrimary = Color(uiColor: .systemGroupedBackground) // メイン背景
+    static let backgroundSecondary = Color(uiColor: .secondarySystemGroupedBackground) // カード背景
+    static let backgroundTertiary = Color(uiColor: .tertiarySystemGroupedBackground) // 区切り背景
     
     // ギャンブル種別カラー - より鮮やかなカラーパレット
     static let gambleHorse = Color(hex: "#1E88E5") // 競馬

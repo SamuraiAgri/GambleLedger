@@ -242,6 +242,7 @@ struct SimpleGambleTypeStatRow: View {
                 
                 Text(stat.name)
                     .font(.headline)
+                    .foregroundColor(.primary)
                 
                 Spacer()
                 
