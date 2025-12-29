@@ -10,6 +10,7 @@ struct DailyBetListView: View {
     @State private var showDetailedRecord = false
     @State private var showEditView = false
     @State private var recordToEditId: String?
+    @State private var recordToEditModel: BetRecordModel?
     @State private var showDeleteAlert = false
     @State private var recordToDelete: String?
     
@@ -48,7 +49,15 @@ struct DailyBetListView: View {
                                     
                                     Button {
                                         recordToEditId = record.id
-                                        showEditView = true
+                                        // レコードを非同期で取得してから表示
+                                        Task {
+                                            if let uuid = UUID(uuidString: record.id) {
+                                                await viewModel.loadBetRecordForEdit(uuid: uuid) { betRecord in
+                                                    recordToEditModel = betRecord
+                                                    showEditView = true
+                                                }
+                                            }
+                                        }
                                     } label: {
                                         Label("編集", systemImage: "pencil")
                                     }
@@ -105,12 +114,11 @@ struct DailyBetListView: View {
                     }
             }
             .sheet(isPresented: $showEditView) {
-                if let recordId = recordToEditId,
-                   let uuid = UUID(uuidString: recordId),
-                   let betRecord = viewModel.getBetRecordModel(for: uuid) {
+                if let betRecord = recordToEditModel {
                     EditBetRecordView(viewModel: EditBetRecordViewModel(record: betRecord))
                         .onDisappear {
                             recordToEditId = nil
+                            recordToEditModel = nil
                             viewModel.loadRecords()
                         }
                 }
