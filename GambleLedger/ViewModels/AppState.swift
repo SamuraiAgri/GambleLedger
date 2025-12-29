@@ -85,19 +85,30 @@ class AppState: ObservableObject {
                 }
             }
             
-            // データが存在しない場合はデフォルト値を使用
-            if loadedTypes.isEmpty {
-                loadedTypes = GambleTypeModel.defaultTypes()
-                
+            // データが存在しない場合、またはデフォルトデータと数が異なる場合は同期
+            let defaultTypes = GambleTypeModel.defaultTypes()
+            if loadedTypes.isEmpty || loadedTypes.count != defaultTypes.count {
                 // デフォルト値をCoreDataに保存
-                for type in loadedTypes {
+                for type in defaultTypes {
                     self.saveGambleTypeToDatabase(type)
                 }
+                loadedTypes = defaultTypes
+            } else {
+                // 既存データがある場合もアイコンと順序を更新
+                self.updateGambleTypesInDatabase()
             }
             
             DispatchQueue.main.async {
-                self.gambleTypes = loadedTypes
+                self.gambleTypes = defaultTypes // 常に最新のデフォルト順序を使用
             }
+        }
+    }
+    
+    // ギャンブル種別のアイコンと色を更新
+    private func updateGambleTypesInDatabase() {
+        let defaultTypes = GambleTypeModel.defaultTypes()
+        for type in defaultTypes {
+            saveGambleTypeToDatabase(type)
         }
     }
 }
