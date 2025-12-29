@@ -18,6 +18,12 @@ class BudgetViewModel: ObservableObject {
     @Published var totalSpentAmount: Decimal = 0
     @Published var budgetProgress: Double = 0
     
+    // 追加の統計情報
+    @Published var dailyAverageLoss: Decimal = 0
+    @Published var projectedMonthlyLoss: Decimal = 0
+    @Published var daysRemaining: Int = 0
+    @Published var recommendedDailyLimit: Decimal = 0
+    
     // 状態管理
     @Published var isLoading: Bool = false
     @Published var isSaving: Bool = false
@@ -131,6 +137,9 @@ class BudgetViewModel: ObservableObject {
                 
                 // 使用額を計算
                 self.calculateSpentAmount(startDate: budget.startDate, endDate: budget.endDate) { spentAmount in
+                    // 追加統計を計算
+                    self.calculateBudgetStatistics(budget: budget, spentAmount: spentAmount)
+                    
                     DispatchQueue.main.async {
                         self.totalSpentAmount = spentAmount
                         self.currentBudget = budget.toDisplayModel(with: nil, usedAmount: spentAmount)
@@ -171,15 +180,46 @@ class BudgetViewModel: ObservableObject {
         }
     }
     
-    // 使用金額の計算
+    // 使用金額の計算（損失ベース）
     private func calculateSpentAmount(startDate: Date, endDate: Date, completion: @escaping (Decimal) -> Void) {
         coreDataManager.fetchBetRecords(startDate: startDate, endDate: endDate) { records in
-            let totalBet = records.reduce(Decimal(0)) { total, record in
+            // 損失（賭け金 - 払戻金）の合計を計算
+            let totalLoss = records.reduce(Decimal(0)) { total, record in
                 let betAmount = (record.value(forKey: "betAmount") as? NSDecimalNumber)?.decimalValue ?? Decimal(0)
-                return total + betAmount
+                let returnAmount = (record.value(forKey: "returnAmount") as? NSDecimalNumber)?.decimalValue ?? Decimal(0)
+                let loss = max(betAmount - returnAmount, 0) // マイナスの場合は0（利益は予算消費としてカウントしない）
+                return total + loss
             }
             
-            completion(totalBet)
+            completion(totalLoss)
+        }
+    }
+    
+    // 予算統計の計算
+    private func calculateBudgetStatistics(budget: BudgetModel, spentAmount: Decimal) {
+        let calendar = Calendar.current
+        let today = Date()
+        
+        // 期間の日数を計算
+        let totalDays = calendar.dateComponents([.day], from: budget.startDate, to: budget.endDate).day ?? 30
+        let elapsedDays = calendar.dateComponents([.day], from: budget.startDate, to: today).day ?? 1
+        let remainingDays = max(calendar.dateComponents([.day], from: today, to: budget.endDate).day ?? 0, 0)
+        
+        // 1日あたりの平均損失
+        let avgDaily = elapsedDays > 0 ? spentAmount / Decimal(elapsedDays) : 0
+        
+        // 月末予測損失
+        let projected = avgDaily * Decimal(totalDays)
+        
+        // 残り日数での推奨1日上限
+        let remaining = budget.amount - spentAmount
+        let recommendedDaily = remainingDays > 0 ? remaining / Decimal(remainingDays) : 0
+        
+        DispatchQueue.main.async {
+            self.dailyAverageLoss = avgDaily
+            self.projectedMonthlyLoss = projected
+            self.daysRemaining = remainingDays
+            self.recommendedDailyLimit = max(recommendedDaily, 0)
         }
     }
 

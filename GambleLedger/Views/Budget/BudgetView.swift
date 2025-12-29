@@ -23,6 +23,15 @@ struct BudgetView: View {
                             usedAmount: currentBudget.usedAmount,
                             period: currentBudget.period
                         )
+                        
+                        // 詳細統計カード
+                        BudgetInsightsCard(
+                            dailyAverage: viewModel.dailyAverageLoss,
+                            projectedLoss: viewModel.projectedMonthlyLoss,
+                            daysRemaining: viewModel.daysRemaining,
+                            recommendedDaily: viewModel.recommendedDailyLimit,
+                            budgetAmount: currentBudget.totalAmount
+                        )
                     }
                     
                     // ギャンブル種別別予算（あれば表示）
@@ -102,7 +111,7 @@ struct CurrentBudgetCard: View {
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text("使用済み")
+                    Text("損失額（使用済み）")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
@@ -597,6 +606,116 @@ struct AddBudgetSheetView: View {
                     }
                     : nil
             )
+        }
+    }
+}
+
+// 予算インサイトカード
+struct BudgetInsightsCard: View {
+    let dailyAverage: Decimal
+    let projectedLoss: Decimal
+    let daysRemaining: Int
+    let recommendedDaily: Decimal
+    let budgetAmount: Decimal
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "chart.bar.doc.horizontal")
+                    .foregroundColor(.secondaryColor)
+                
+                Text("予算インサイト")
+                    .font(.headline)
+                    .foregroundColor(.secondaryColor)
+            }
+            
+            // インサイト情報
+            VStack(spacing: 12) {
+                // 1日平均損失
+                InsightRow(
+                    icon: "calendar.day.timeline.left",
+                    title: "1日平均損失",
+                    value: dailyAverage.formatted(.currency(code: "JPY")),
+                    color: .accentDanger
+                )
+                
+                Divider()
+                
+                // 月末予測
+                InsightRow(
+                    icon: "chart.line.uptrend.xyaxis",
+                    title: "このペースだと月末には",
+                    value: projectedLoss.formatted(.currency(code: "JPY")),
+                    color: projectedLoss > budgetAmount ? .accentDanger : .accentWarning,
+                    subtitle: projectedLoss > budgetAmount ? "予算オーバーの可能性" : nil
+                )
+                
+                Divider()
+                
+                // 残り日数と推奨1日上限
+                InsightRow(
+                    icon: "hourglass",
+                    title: "残り\(daysRemaining)日で使える1日上限",
+                    value: recommendedDaily.formatted(.currency(code: "JPY")),
+                    color: .accentSuccess,
+                    subtitle: "予算内に収めるには"
+                )
+            }
+            .padding(.vertical, 8)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.backgroundSecondary)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [.accentWarning.opacity(0.3), .accentSuccess.opacity(0.3)]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1.5
+                )
+        )
+        .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
+    }
+}
+
+// インサイト行
+struct InsightRow: View {
+    let icon: String
+    let title: String
+    let value: String
+    let color: Color
+    var subtitle: String? = nil
+    
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(color)
+                .frame(width: 32)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                if let subtitle = subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            Spacer()
+            
+            Text(value)
+                .font(.headline)
+                .fontWeight(.bold)
+                .foregroundColor(color)
         }
     }
 }
